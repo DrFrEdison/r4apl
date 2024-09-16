@@ -1,0 +1,19 @@
+Package: r4apl
+Type: Package
+Title: A Package for Analysis and Processing data for APL with focus on GC-XX, IC & HPLC data
+Version: 0.0.0.9000
+Authors@R: 
+    person("Markus", "Kurtz", , "markus.kurtz@apl-landau.de", role = c("aut", "cre"))
+Description: The 'r4apl' package provides a suite of tools for processing data from various analytical techniques, including Gas Chromatography-Mass Spectrometry (GC-MS), Flame Ionization Detection (FID), Thermal Conductivity Detection (TCD), Ion Chromatography (IC), and High-Performance Liquid Chromatography (HPLC). Additional functions for data analysis and visualization across these platforms are also included.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Imports: 
+    dplyr,
+	tidyr,
+    data.table,
+    plotly
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
