@@ -1,3 +1,16 @@
+.onLoad <- function(libname, pkgname) {
+  package_version <- packageDescription(pkgname)$Version
+  version_name <- packageDescription(pkgname)$VersionName
+  
+  message(paste(pkgname, "version", package_version, "--", version_name))
+  message("Check the GitHub repository at: https://github.com/DrFrEdison/r4apl")
+  
+  # Load any other necessary initialization code here
+  
+  # Make sure to return(TRUE) at the end
+  return(TRUE)
+}
+
 datetime <- function(datetime = Sys.time(), time = F){
   if(!time) return(gsub("\\-", "", substr(datetime, 3, 10)))
   if(time) return(gsub("\\ ", "_", gsub("\\:", "", gsub("\\-", "", substr(datetime, 3, 19)))))
@@ -94,19 +107,6 @@ opendir <- function(dir = getwd()){
   } else {
     system(paste(Sys.getenv("R_BROWSER"), dir))
   }
-}
-
-.onLoad <- function(libname, pkgname) {
-  package_version <- packageDescription(pkgname)$Version
-  version_name <- packageDescription(pkgname)$VersionName
-  
-  message(paste(pkgname, "version", package_version, "--", version_name))
-  message("Check the GitHub repository at: https://github.com/DrFrEdison/r4dt")
-  
-  # Load any other necessary initialization code here
-  
-  # Make sure to return(TRUE) at the end
-  return(TRUE)
 }
 
 # moveme function ####

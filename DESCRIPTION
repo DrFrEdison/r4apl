@@ -9,7 +9,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Imports: 
     dplyr,
-	tidyr,
+	  tidyr,
     data.table,
     plotly
 Roxygen: list(markdown = TRUE)
