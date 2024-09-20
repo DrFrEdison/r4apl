@@ -1,0 +1,90 @@
+2024-09-16 15:27:14,016 - INFO - Found 21 .D files to process.
+2024-09-16 15:27:15,580 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_00011.D
+2024-09-16 15:27:15,580 - INFO - Raw date string from metadata: 03 Sep 24  03:42 pm
+2024-09-16 15:27:15,580 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00011_GC_MS_240903_154200.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00011_GC_TCD1A_240903_154200.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00011_GC_TCD2B_240903_154200.csv']
+2024-09-16 15:27:16,179 - INFO - MS data processed successfully.
+2024-09-16 15:27:17,595 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\0002_Erster_Run.D
+2024-09-16 15:27:17,598 - INFO - Raw date string from metadata: 03 Sep 24  10:30 am
+2024-09-16 15:27:17,600 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0002_Erster_Run_GC_MS_240903_103000.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0002_Erster_Run_GC_TCD1A_240903_103000.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0002_Erster_Run_GC_TCD2B_240903_103000.csv']
+2024-09-16 15:27:17,623 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\0001_Erster_Run.D
+2024-09-16 15:27:17,623 - INFO - Raw date string from metadata: 03 Sep 24  10:03 am
+2024-09-16 15:27:17,623 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0001_Erster_Run_GC_MS_240903_100300.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0001_Erster_Run_GC_TCD1A_240903_100300.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0001_Erster_Run_GC_TCD2B_240903_100300.csv']
+2024-09-16 15:27:17,640 - INFO - CSV files for 0002_Erster_Run already exist. Skipping processing.
+2024-09-16 15:27:17,644 - INFO - CSV files for 0001_Erster_Run already exist. Skipping processing.
+2024-09-16 15:27:17,715 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\0003_Erster_Run.D
+2024-09-16 15:27:17,715 - INFO - Raw date string from metadata: 03 Sep 24  10:37 am
+2024-09-16 15:27:17,715 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0003_Erster_Run_GC_MS_240903_103700.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0003_Erster_Run_GC_TCD1A_240903_103700.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0003_Erster_Run_GC_TCD2B_240903_103700.csv']
+2024-09-16 15:27:17,738 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_00008.D
+2024-09-16 15:27:17,738 - INFO - Raw date string from metadata: 03 Sep 24  01:45 pm
+2024-09-16 15:27:17,738 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_00012.D
+2024-09-16 15:27:17,738 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00008_GC_MS_240903_134500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00008_GC_TCD1A_240903_134500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00008_GC_TCD2B_240903_134500.csv']
+2024-09-16 15:27:17,738 - INFO - Raw date string from metadata: 04 Sep 24  12:26 pm
+2024-09-16 15:27:17,738 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00012_GC_MS_240904_122600.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00012_GC_TCD1A_240904_122600.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00012_GC_TCD2B_240904_122600.csv']
+2024-09-16 15:27:17,738 - INFO - CSV files for 0003_Erster_Run already exist. Skipping processing.
+2024-09-16 15:27:17,738 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\0004_Ventilschaltung.D
+2024-09-16 15:27:17,738 - INFO - Raw date string from metadata: 03 Sep 24  11:38 am
+2024-09-16 15:27:17,738 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0004_Ventilschaltung_GC_MS_240903_113800.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0004_Ventilschaltung_GC_TCD1A_240903_113800.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//0004_Ventilschaltung_GC_TCD2B_240903_113800.csv']
+2024-09-16 15:27:17,835 - INFO - CSV files for 240903_00012 already exist. Skipping processing.
+2024-09-16 15:27:17,836 - INFO - CSV files for 240903_00008 already exist. Skipping processing.
+2024-09-16 15:27:17,836 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_00014.D
+2024-09-16 15:27:17,838 - INFO - Raw date string from metadata: 04 Sep 24  01:45 pm
+2024-09-16 15:27:17,839 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00014_GC_MS_240904_134500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00014_GC_TCD1A_240904_134500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00014_GC_TCD2B_240904_134500.csv']
+2024-09-16 15:27:17,839 - INFO - CSV files for 0004_Ventilschaltung already exist. Skipping processing.
+2024-09-16 15:27:17,841 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_00013.D
+2024-09-16 15:27:17,841 - INFO - Raw date string from metadata: 04 Sep 24  01:05 pm
+2024-09-16 15:27:17,842 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00013_GC_MS_240904_130500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00013_GC_TCD1A_240904_130500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00013_GC_TCD2B_240904_130500.csv']
+2024-09-16 15:27:17,997 - INFO - CSV files for 240903_00013 already exist. Skipping processing.
+2024-09-16 15:27:17,997 - INFO - CSV files for 240903_00014 already exist. Skipping processing.
+2024-09-16 15:27:18,212 - ERROR - ZeroDivisionError encountered in file Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_0006.D. Skipping file. Error: float division by zero
+2024-09-16 15:27:18,432 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_00016.D
+2024-09-16 15:27:18,432 - INFO - Raw date string from metadata: 04 Sep 24  03:02 pm
+2024-09-16 15:27:18,432 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00016_GC_MS_240904_150200.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00016_GC_TCD1A_240904_150200.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00016_GC_TCD2B_240904_150200.csv']
+2024-09-16 15:27:18,848 - INFO - MS data processed successfully.
+2024-09-16 15:27:19,969 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240905_00017.D
+2024-09-16 15:27:19,969 - INFO - Raw date string from metadata: 05 Sep 24  08:17 am
+2024-09-16 15:27:20,001 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00017_GC_MS_240905_081700.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00017_GC_TCD1A_240905_081700.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00017_GC_TCD2B_240905_081700.csv']
+2024-09-16 15:27:20,016 - INFO - No MS data found.
+2024-09-16 15:27:20,016 - INFO - FID data processed successfully.
+2024-09-16 15:27:20,016 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_00010.D
+2024-09-16 15:27:20,016 - INFO - Raw date string from metadata: 03 Sep 24  03:05 pm
+2024-09-16 15:27:20,016 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00010_GC_MS_240903_150500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00010_GC_TCD1A_240903_150500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00010_GC_TCD2B_240903_150500.csv']
+2024-09-16 15:27:20,016 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_00009.D
+2024-09-16 15:27:20,016 - INFO - Raw date string from metadata: 03 Sep 24  02:25 pm
+2024-09-16 15:27:20,016 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00009_GC_MS_240903_142500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00009_GC_TCD1A_240903_142500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00009_GC_TCD2B_240903_142500.csv']
+2024-09-16 15:27:20,016 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_00007.D
+2024-09-16 15:27:20,016 - INFO - Raw date string from metadata: 03 Sep 24  01:05 pm
+2024-09-16 15:27:20,016 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00007_GC_MS_240903_130500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00007_GC_TCD1A_240903_130500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00007_GC_TCD2B_240903_130500.csv']
+2024-09-16 15:27:20,032 - INFO - CSV files for 240903_00010 already exist. Skipping processing.
+2024-09-16 15:27:20,032 - INFO - CSV files for 240903_00009 already exist. Skipping processing.
+2024-09-16 15:27:20,079 - INFO - CSV files for 240903_00007 already exist. Skipping processing.
+2024-09-16 15:27:20,111 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_00015.D
+2024-09-16 15:27:20,111 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240903_0005.D
+2024-09-16 15:27:20,111 - INFO - Raw date string from metadata: 04 Sep 24  02:24 pm
+2024-09-16 15:27:20,111 - INFO - Raw date string from metadata: 03 Sep 24  12:25 pm
+2024-09-16 15:27:20,111 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00015_GC_MS_240904_142400.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00015_GC_TCD1A_240904_142400.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00015_GC_TCD2B_240904_142400.csv']
+2024-09-16 15:27:20,111 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_0005_GC_MS_240903_122500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_0005_GC_TCD1A_240903_122500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_0005_GC_TCD2B_240903_122500.csv']
+2024-09-16 15:27:20,143 - INFO - CSV files for 240903_00015 already exist. Skipping processing.
+2024-09-16 15:27:20,144 - INFO - CSV files for 240903_0005 already exist. Skipping processing.
+2024-09-16 15:27:20,156 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240905_00019.D
+2024-09-16 15:27:20,156 - INFO - Raw date string from metadata: 05 Sep 24  09:05 am
+2024-09-16 15:27:20,161 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00019_GC_MS_240905_090500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00019_GC_TCD1A_240905_090500.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00019_GC_TCD2B_240905_090500.csv']
+2024-09-16 15:27:20,191 - INFO - CSV files for 240905_00019 already exist. Skipping processing.
+2024-09-16 15:27:20,192 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240905_00021.D
+2024-09-16 15:27:20,192 - INFO - Raw date string from metadata: 05 Sep 24  10:41 am
+2024-09-16 15:27:20,193 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00021_GC_MS_240905_104100.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00021_GC_TCD1A_240905_104100.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00021_GC_TCD2B_240905_104100.csv']
+2024-09-16 15:27:20,196 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240905_00020.D
+2024-09-16 15:27:20,196 - INFO - Raw date string from metadata: 05 Sep 24  09:50 am
+2024-09-16 15:27:20,196 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00020_GC_MS_240905_095000.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00020_GC_TCD1A_240905_095000.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00020_GC_TCD2B_240905_095000.csv']
+2024-09-16 15:27:20,199 - INFO - CSV files for 240905_00021 already exist. Skipping processing.
+2024-09-16 15:27:20,200 - INFO - CSV files for 240905_00020 already exist. Skipping processing.
+2024-09-16 15:27:20,256 - INFO - Successfully read file: Z://Mitarbeiter//Kurtz Markus//data//raw//GC_MS\240905_00022.D
+2024-09-16 15:27:20,256 - INFO - Raw date string from metadata: 05 Sep 24  11:24 am
+2024-09-16 15:27:20,256 - INFO - Checking existence of expected CSV files: ['Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00022_GC_MS_240905_112400.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00022_GC_TCD1A_240905_112400.csv', 'Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00022_GC_TCD2B_240905_112400.csv']
+2024-09-16 15:27:20,266 - INFO - CSV files for 240905_00022 already exist. Skipping processing.
+2024-09-16 15:27:20,519 - INFO - Data exported to Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00017_GC_TCD1A_240905_081700.csv
+2024-09-16 15:27:20,814 - INFO - Data exported to Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240905_00017_GC_TCD2B_240905_081700.csv
+2024-09-16 15:27:21,100 - INFO - Data exported to Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00016_GC_MS_240904_150200.csv
+2024-09-16 15:27:21,100 - INFO - No FID data found.
+2024-09-16 15:27:21,100 - INFO - Data exported to Z://Mitarbeiter//Kurtz Markus//data//csv//GC_MS//240903_00011_GC_MS_240903_154200.csv
+2024-09-16 15:27:21,100 - INFO - No FID data found.
+2024-09-16 15:27:21,100 - INFO - Processing completed.

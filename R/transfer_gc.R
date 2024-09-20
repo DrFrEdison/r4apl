@@ -24,15 +24,15 @@
 transfer.ms <- function(dat
                         , mass.pattern = "m[0-9]"
                         , time.pattern = "time_MS"){
-  
+
   mass.col <- grep(mass.pattern, colnames(dat), value = F)
   mass.abs <- grep(mass.pattern, colnames(dat), value = T)
   mass.abs <- as.numeric(gsub(gsub("\\[0\\-9\\]", "", mass.pattern), "", mass.abs))
-  
+
   time.abs <- dat[ , get(time.pattern)]
-  
+
   returnlist <- list()
-  
+
   returnlist$time <- time.abs
   returnlist$mass <- mass.abs
   returnlist$mz <- dat[ , mass.col, with = F]
@@ -40,14 +40,14 @@ transfer.ms <- function(dat
   returnlist$mz.log10.p1.mtx <- log10(as.matrix(returnlist$mz.mtx)+1)
   returnlist$normalized.by.row <- t(apply(returnlist$mz.mtx, 1, function(x) x / max(x, na.rm = TRUE)))
   mz_mtx_norm <- t(apply(returnlist$mz.mtx, 1, function(x) x / max(x, na.rm = TRUE)))
-  
+
   return(returnlist)
 }
 
 #' Transfer TCD Data
 #'
-#' This function merges Thermal Conductivity Detector (TCD) data from two sources 
-#' when the time differences between them are minimal or zero, handling cases where 
+#' This function merges Thermal Conductivity Detector (TCD) data from two sources
+#' when the time differences between them are minimal or zero, handling cases where
 #' the number of rows differs by performing a rolling join.
 #'
 #' @param tcd1A A data frame or data table containing TCD1A data with time and signal columns.
@@ -55,7 +55,7 @@ transfer.ms <- function(dat
 #' @param colnames A character vector specifying the column names for the merged data. Default is `c("time", "TCD1A", "TCD2B")`.
 #'
 #' @return A merged data frame of TCD data containing time, TCD1A, and TCD2B values.
-#' 
+#'
 #' @examples
 #' \dontrun{
 #'   # Example usage:
@@ -65,31 +65,33 @@ transfer.ms <- function(dat
 transfer.tcd <- function(tcd1A = NA
                          , tcd2B = NA
                          , colnames = c("time", "TCD1A", "TCD2B")){
-  
+
   # Merge TCD data when both have a time difference of 0 and the same number of rows
   if(nrow(tcd1A) == nrow(tcd2B)){
-    
-    if(unique(tcd1A$time_TCD1A - tcd2B$time_TCD2B) == 0){
-      
-      tcd.merge <- cbind(tcd1A, tcd2B$signal_TCD2B)
+
+
+
+    if(unique(tcd1A[ , get(grep("time", colnames(tcd1A), value = T))] - tcd2B[ , get(grep("time", colnames(tcd2B), value = T))]) == 0){
+
+      tcd.merge <- cbind(tcd1A, tcd2B[ , get(grep("signal", colnames(tcd2B), value = T))])
       colnames(tcd.merge) <- colnames
       return(tcd.merge)
-      
+
     }
   }
-  
+
   # Perform rolling join if rows differ
   if(nrow(tcd1A) != nrow(tcd2B)){
-    
-    setkey(tcd1A, time_TCD1A)
-    setkey(tcd2B, time_TCD2B)
-    
+
+    setkeyv(tcd1A, grep("time", colnames(tcd1A), value = T))
+    setkeyv(tcd2B, grep("time", colnames(tcd2B), value = T))
+
     # Perform a rolling join using the nearest time points
     tcd.merge <- tcd1A[tcd2B, roll = "nearest"]
-    
+
     colnames(tcd.merge) <- colnames
     return(tcd.merge)
-    
+
   }
 }
 

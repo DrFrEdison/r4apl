@@ -1,103 +1,112 @@
-find.read.IC.database <- function(dir = wd$team_labor$datensicherung$IC
-                                  , date = NA # set manual date
-                                  , time = NA # set manual time
-                                  , order = NA #set manual order postion from newest to olders
-                                  , subdat = T # return a smaller file
-                                  , subdate = "2024-07-01" # return data which is >= subdate
-){
-  
-  setwd(dir)
-  setwd("./csv_Datenbank")
-  
+#' Read IC Database and Filter Data
+#'
+#' This function reads Ion Chromatography (IC) database files from a specified directory, allows filtering by date and time, and optionally returns a subset of the data.
+#'
+#' @param dir Character, the directory where IC database files are stored. Default is `wd$team_labor$datensicherung$IC`.
+#' @param date Character, optional. A manual date (format: "YYYYMMDD") to filter the files. Default is NA.
+#' @param time Character, optional. A manual time (format: "HHMM") to filter the files. Default is NA.
+#' @param order Integer, optional. Specifies the order position of files from newest to oldest. Default is NA.
+#' @param subdat Logical, whether to return a smaller subset of the data. Default is TRUE.
+#' @param subdate Character, a date (format: "YYYY-MM-DD") to filter the data by `Bestimmungsstart`. Default is "2024-07-01".
+#'
+#' @return A data.table containing the filtered IC data.
+#'
+#' @examples
+#' \dontrun{
+#' find.read.IC.database(date = "20240701", time = "1200")
+#' }
+#'
+#' @export
+find.read.IC.database <- function(dir = wd$team_labor$datensicherung$IC,
+                                  date = NA,  # set manual date
+                                  time = NA,  # set manual time
+                                  order = NA, # set manual order position from newest to oldest
+                                  subdat = TRUE, # return a smaller file
+                                  subdate = "2024-07-01" # return data which is >= subdate
+) {
+
+  # Set working directory
+  setwd(file.path(dir, "csv_Datenbank"))
+
+  # Retrieve the list of IC database files
   files <- dir(pattern = "*IC_Datenbank.csv$")
   files.ctime <- file.info(files)$ctime
-  files.order <- files[ order(file.info(files)$ctime) ]
-  
-  if( !is.na(date) & is.na(time)){
-    
-    files <- files[ substr(files, 1, 6) %in% date ]
-    files.ctime <- files.ctime[ substr(files, 1, 6) %in% date ]
-    files.order <- files.order[ substr(files, 1, 6) %in% date ]
-    
-  }
-  
-  if( !is.na(date) & !is.na(time)){
-    
-    files.order <- files[ substr(files, 1, 13) %in% paste0(date, "_", time) ]
-    
-  }
-  
-  if( !is.na(order)){
-    
-    files.order <- rev(files.order)
-    files.order <- files.order[ order ]
-    
-  }
-  
-  # read database ####
-  dat <- fread(files.order[ length( files.order )]
-               , sep = ";", dec = ",", encoding = "Latin-1"
-               , na.strings = "")
-  dat$Bestimmungsstart <- as.POSIXct(dat$Bestimmungsstart, tz = "UTC")
-  dat <- dat[ order(dat$Bestimmungsstart) , ]
-  
-  # Change column names ####
-  colnames(dat) <- gsub("Anionen.", "", colnames(dat))
-  colnames(dat) <- gsub("AHWP.", "", colnames(dat))
-  
-  if(subdat){
-    subcol <- c("Bestimmungsstart","Ident", "Probentyp", "Methodenname"
-                # , "Volumen"
-                , "Verdünnung"
-                , "Bestimmungs-ID", "Bestimmungsdauer [min]" #, "Nachbearbeitungsdatum"
-                , grep("Info", colnames(dat), value = T)[ 1 ]
-                # , grep("Wert", colnames(dat), value = T)
-                , grep("Konzentration", colnames(dat), value = T)
-                , grep("Kalibrierpunkte", colnames(dat), value = T)
-                # , "Änderungskommentar Bestimmung"
-    )
-    subcol <- grep("mittelwert", subcol, invert = T, value = T)
-    subcol <- grep("anteil", subcol, invert = T, value = T)
-    
-    if(any(!subcol %in% colnames( dat ))){
-      warning(paste0("Column ", subcol[ !subcol %in% colnames( dat )], "not found in ", files.order[ length( files.order )]))
-      subcol <- subcol[ subcol %in% colnames( dat )]
+  files.order <- files[order(file.info(files)$ctime)]
+
+  # Filter files by date if specified
+  if (!is.na(date) && is.na(time)) {
+    files <- files[substr(files, 1, 8) == date]
+    files.order <- files[order(file.info(files[substr(files, 1, 8) == date])$ctime)]
+
+    if (length(files) == 0) {
+      warning("No files found for the specified date.")
     }
-    
-    dat <- dat[ , ..subcol]
-    
   }
-  
-  if(!is.na(subdate)){
-    
-    dat <- dat[ as.Date(dat$Bestimmungsstart) >= subdate , ]
-    
+
+  # Filter files by both date and time if specified
+  if (!is.na(date) && !is.na(time)) {
+    files.order <- files[substr(files, 1, 13) == paste0(date, "_", time)]
+
+    if (length(files.order) == 0) {
+      warning("No files found for the specified date and time.")
+    }
   }
-  
-  # filter database ####
-  # Convert character columns with numeric values to numeric
+
+  # Filter by manual order if specified
+  if (!is.na(order)) {
+    files.order <- rev(files.order)[order]
+  }
+
+  # Read the most recent file from the ordered list
+  dat <- fread(files.order[length(files.order)],
+               sep = ";", dec = ",", encoding = "Latin-1",
+               na.strings = "")
+
+  # Convert the 'Bestimmungsstart' column to POSIXct
+  dat$Bestimmungsstart <- as.POSIXct(dat$Bestimmungsstart, tz = "UTC")
+  dat <- dat[order(dat$Bestimmungsstart), ]
+
+  # Clean up column names by removing unnecessary prefixes
+  colnames(dat) <- gsub("Anionen\\.|AHWP\\.", "", colnames(dat))
+
+  # Subset the data if 'subdat' is TRUE
+  if (subdat) {
+    subcol <- c("Bestimmungsstart", "Ident", "Probentyp", "Methodenname",
+                "Verdünnung", "Bestimmungs-ID", "Bestimmungsdauer [min]",
+                grep("Info", colnames(dat), value = TRUE)[1],
+                grep("Konzentration", colnames(dat), value = TRUE),
+                grep("Kalibrierpunkte", colnames(dat), value = TRUE))
+
+    subcol <- grep("mittelwert|anteil", subcol, invert = TRUE, value = TRUE)
+
+    # Warn about missing columns
+    missing_cols <- subcol[!subcol %in% colnames(dat)]
+    if (length(missing_cols) > 0) {
+      warning(paste0("Columns not found: ", paste(missing_cols, collapse = ", ")))
+      subcol <- subcol[subcol %in% colnames(dat)]
+    }
+
+    dat <- dat[, ..subcol]
+  }
+
+  # Filter by 'subdate' if provided
+  if (!is.na(subdate)) {
+    dat <- dat[as.Date(dat$Bestimmungsstart) >= as.Date(subdate), ]
+  }
+
+  # Convert relevant character columns to numeric
   numeric_columns <- dat[, lapply(.SD, function(col) all(grepl("^[0-9.]+$", col)))]
-  numeric_columns[ , grep("Konzentration", colnames(dat), value = T)] <- T
-  numeric_columns[ , grep("Kalibrierpunkte", colnames(dat), value = T)] <- T
-  
   numeric_columns <- names(dat)[as.logical(unlist(numeric_columns))]
-  
+
   dat[, (numeric_columns) := lapply(.SD, as.numeric), .SDcols = numeric_columns]
-  
-  # Identify columns that are not entirely empty strings
-  non_empty_string_cols <- sapply(dat, function(col) !all( as.character(col) == ""))
-  # Identify columns that are not entirely NA
-  non_na_cols <- sapply(dat, function(col) !all(is.na(col)))
-  
-  # Combine the conditions to determine columns to keep
-  cols_to_keep <- non_empty_string_cols & non_na_cols
-  cols_to_keep <- names(cols_to_keep)
-  # Subset the data.table to keep only the desired columns
-  dat <- dat[, ..cols_to_keep]
-  
-  if(any(colnames(dat) %in% "Probentyp")) dat$Probentyp <- factor( dat$Probentyp )
-  if(any(colnames(dat) %in% "Methodenname")) dat$Methodenname <- factor( dat$Methodenname )
-  
-  # return
+
+  # Remove columns that are entirely empty or contain only NA
+  non_empty_cols <- sapply(dat, function(col) !all(is.na(col) | col == ""))
+  dat <- dat[, ..names(non_empty_cols)[non_empty_cols]]
+
+  # Convert 'Probentyp' and 'Methodenname' to factors if present
+  if ("Probentyp" %in% colnames(dat)) dat$Probentyp <- factor(dat$Probentyp)
+  if ("Methodenname" %in% colnames(dat)) dat$Methodenname <- factor(dat$Methodenname)
+
   return(dat)
 }
