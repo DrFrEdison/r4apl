@@ -146,6 +146,7 @@ rangexy <- function(xy, p = c(5, 5)) {
   range.xy[1] <- range.xy[1] * p[1]
   range.xy[2] <- range.xy[2] * p[2]
 
+  if(range.xy[ 1 ] == range.xy[ 2 ]) range.xy[ 2 ] <- range.xy[ 2 ] + 1
   return(range.xy)
 }
 

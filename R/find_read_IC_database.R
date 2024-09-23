@@ -19,7 +19,7 @@
 #' @export
 find.read.IC.database <- function(dir = wd$team_labor$datensicherung$IC,
                                   date = NA,  # set manual date
-                                  time = NA,  # set manual time
+                                  # time = NA,  # set manual time
                                   order = NA, # set manual order position from newest to oldest
                                   subdat = TRUE, # return a smaller file
                                   subdate = "2024-07-01" # return data which is >= subdate
