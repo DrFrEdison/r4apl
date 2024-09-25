@@ -101,8 +101,8 @@ find.read.IC.database <- function(dir = wd$team_labor$datensicherung$IC,
   dat[, (numeric_columns) := lapply(.SD, as.numeric), .SDcols = numeric_columns]
 
   # Remove columns that are entirely empty or contain only NA
-  non_empty_cols <- sapply(dat, function(col) !all(is.na(col) | col == ""))
-  dat <- dat[, ..names(non_empty_cols)[non_empty_cols]]
+  non_empty_cols <- sapply(dat, function(col) !all(is.na(col) | as.character(col) == ""))
+  dat <- dat[, names(non_empty_cols), with = F]
 
   # Convert 'Probentyp' and 'Methodenname' to factors if present
   if ("Probentyp" %in% colnames(dat)) dat$Probentyp <- factor(dat$Probentyp)
