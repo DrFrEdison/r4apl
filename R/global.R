@@ -1,15 +1,41 @@
+#' Determine Rows and Columns for Plot Layout
+#'
+#' This function calculates the optimal number of rows and columns for a plotting layout based on the total number of plots.
+#'
+#' @param n Integer, the number of plots.
+#'
+#' @return A vector of two integers: the number of rows and columns for the plot layout.
+#' @export
+parmfrow <- function(n) {
+  # Calculate the number of rows and columns to arrange n plots
+  nrows <- ceiling(sqrt(n))
+  ncols <- ceiling(n / nrows)
+  return(c(nrows, ncols))
+}
+
+
+#' Package Load Initialization
+#'
+#' This function runs automatically when the package is loaded, displaying version information and additional details.
+#'
+#' @param libname The library name.
+#' @param pkgname The package name.
+#'
+#' @return TRUE (ensures the function completes successfully).
+#' @export
 .onLoad <- function(libname, pkgname) {
+  # Get the package version and version name
   package_version <- packageDescription(pkgname)$Version
   version_name <- packageDescription(pkgname)$VersionName
 
+  # Display the package version information and GitHub repository link
   message(paste(pkgname, "version", package_version, "--", version_name))
   message("Check the GitHub repository at: https://github.com/DrFrEdison/r4apl")
 
-  # Load any other necessary initialization code here
-
-  # Make sure to return(TRUE) at the end
+  # Ensure the function returns TRUE to indicate successful loading
   return(TRUE)
 }
+
 
 #' Format Datetime String
 #'
@@ -20,14 +46,16 @@
 #'
 #' @return A formatted string representing the date or datetime.
 #' @export
-datetime <- function(datetime = Sys.time(), time = FALSE){
-  if(!time){
-    return(gsub("\\-", "", substr(datetime, 3, 10)))
+datetime <- function(datetime = Sys.time(), time = FALSE) {
+  # Remove hyphens from the date and time string
+  if (!time) {
+    return(gsub("-", "", substr(datetime, 3, 10)))
   }
-  if(time){
-    return(gsub("\\ ", "_", gsub("\\:", "", gsub("\\-", "", substr(datetime, 3, 19)))))
+  if (time) {
+    return(gsub(" ", "_", gsub(":", "", gsub("-", "", substr(datetime, 3, 19)))))
   }
 }
+
 
 #' Get ISO Week Number
 #'
@@ -38,38 +66,10 @@ datetime <- function(datetime = Sys.time(), time = FALSE){
 #' @return An integer representing the ISO week number.
 #' @export
 kw <- function(date = Sys.Date()) {
+  # Use the data.table package's isoweek function to get the ISO week
   data.table::isoweek(date)
 }
 
-#' Estimate Analysis Completion Time
-#'
-#' This function calculates the estimated completion time for ongoing sample analysis, given the duration of each sample and the number of samples remaining.
-#'
-#' @param sample.duration Numeric value representing the duration of each sample in minutes.
-#' @param samples.to.go Integer representing the number of remaining samples.
-#' @param time The starting time of analysis, default is the current system time.
-#' @param unit Time unit for the output, can be "h" for hours or "min" for minutes. Default is "h".
-#'
-#' @return A message string describing the expected completion time.
-#' @export
-analysis.time <- function(sample.duration, samples.to.go, time = Sys.time(), unit = c("h", "min")) {
-  unit <- match.arg(unit)
-
-  samples.ready <- sample.duration * samples.to.go * 60 + time
-  time.to.go <- as.numeric(difftime(samples.ready, time, units = ifelse(unit == "h", "hours", "mins")))
-
-  time.to.go <- round(time.to.go, 1)
-
-  if (as.Date(samples.ready) == as.Date(time)) {
-    return(paste0("Fertig heute um ", strftime(samples.ready, format = "%H:%M"), ", noch ", time.to.go, " ", unit))
-  } else if (as.Date(samples.ready) == as.Date(time) + 1) {
-    return(paste0("Fertig morgen um ", strftime(samples.ready, format = "%H:%M"), ", noch ", time.to.go, " ", unit))
-  } else if (as.Date(samples.ready) == as.Date(time) + 2) {
-    return(paste0("Fertig übermorgen um ", strftime(samples.ready, format = "%H:%M"), ", noch ", time.to.go, " ", unit))
-  } else {
-    return(paste0("Fertig um ", strftime(samples.ready, format = "%H:%M"), " am ", format(as.Date(samples.ready), "%d.%m"), ", noch ", time.to.go, " ", unit))
-  }
-}
 
 #' Create a Subscripted Formula
 #'
@@ -82,16 +82,19 @@ analysis.time <- function(sample.duration, samples.to.go, time = Sys.time(), uni
 #' @return A parsed expression suitable for rendering in plots or other mathematical displays.
 #' @export
 subscript_formula <- function(formula, bold = TRUE) {
+  # Check if the formula ends with a number and apply subscript formatting
   if (grepl("\\d+$", formula)) {
     numbers <- str_extract(formula, "\\d+$")
     base <- str_remove(formula, "\\d+$")
-    if (bold) return(parse(text = paste0("bold(", base, "[", numbers, "])")))
-    else return(parse(text = paste0(base, "[", numbers, "]")))
+    if (bold) {
+      return(parse(text = paste0("bold(", base, "[", numbers, "])")))
+    } else {
+      return(parse(text = paste0(base, "[", numbers, "]")))
+    }
   } else {
-    return(formula)  # Return formula unchanged if no numbers found
+    return(formula)  # Return the formula unchanged if no number is found
   }
 }
-
 
 #' Display a Subset of Data
 #'
@@ -105,10 +108,14 @@ subscript_formula <- function(formula, bold = TRUE) {
 #' @return A subset of the data frame or data table.
 #' @export
 head10 <- function(x, nrowp = 10, ncolp = 1:10, tail = FALSE) {
+  # Adjust column indices if 'all' is provided or if indices exceed the number of columns
   if (length(ncolp) == 1 && ncolp == "all") ncolp <- 1:ncol(x)
   ncolp <- sort(unique(ifelse(ncolp > ncol(x), ncol(x), ncolp)))
+
+  # Adjust the number of rows to avoid exceeding the number of rows
   nrowp <- min(nrowp, nrow(x))
 
+  # Display either the head or tail of the selected columns
   if (!tail) {
     if (is.data.table(x)) return(head(x[, ncolp, with = FALSE], nrowp))
     else return(head(x[, ncolp], nrowp))
@@ -117,7 +124,6 @@ head10 <- function(x, nrowp = 10, ncolp = 1:10, tail = FALSE) {
     else return(tail(x[, ncolp], nrowp))
   }
 }
-
 
 #' Adjust Range of Data with Percentile Changes
 #'
@@ -146,7 +152,8 @@ rangexy <- function(xy, p = c(5, 5)) {
   range.xy[1] <- range.xy[1] * p[1]
   range.xy[2] <- range.xy[2] * p[2]
 
-  if(range.xy[ 1 ] == range.xy[ 2 ]) range.xy[ 2 ] <- range.xy[ 2 ] + 1
+  # Ensure the range isn't collapsed to a single point
+  if (range.xy[1] == range.xy[2]) range.xy[2] <- range.xy[2] + 1
   return(range.xy)
 }
 
@@ -158,11 +165,12 @@ rangexy <- function(xy, p = c(5, 5)) {
 #'
 #' @export
 opendir <- function(dir = getwd()) {
+  # Open directory using system-specific methods
   if (.Platform['OS.type'] == "windows") {
-    # For Windows, open the directory in File Explorer using shell.exec()
+    # On Windows, open in File Explorer
     shell.exec(gsub("/", "\\\\", dir))
   } else {
-    # For non-Windows systems, open the directory in the default browser
+    # On other systems, open in the default web browser
     system(paste(Sys.getenv("R_BROWSER"), dir))
   }
 }

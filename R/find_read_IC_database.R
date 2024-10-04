@@ -18,51 +18,33 @@
 #'
 #' @export
 find.read.IC.database <- function(dir = wd$team_labor$datensicherung$IC,
-                                  date = NA,  # set manual date
-                                  # time = NA,  # set manual time
-                                  order = NA, # set manual order position from newest to oldest
-                                  subdat = TRUE, # return a smaller file
-                                  subdate = "2024-07-01" # return data which is >= subdate
-) {
+                                  date = NA,
+                                  order = NA,
+                                  subdat = TRUE,
+                                  subdate = "2024-07-01") {
 
-  # Set working directory
+  # Set working directory to IC csv database folder
   setwd(file.path(dir, "csv_Datenbank"))
 
   # Retrieve the list of IC database files
-  files <- dir(pattern = "*IC_Datenbank.csv$")
+  files <- dir(pattern = "*ic_database.csv$")
   files.ctime <- file.info(files)$ctime
   files.order <- files[order(file.info(files)$ctime)]
 
-  # Filter files by date if specified
-  if (!is.na(date) && is.na(time)) {
+  # Filter files by date if provided
+  if (!is.na(date)) {
     files <- files[substr(files, 1, 8) == date]
     files.order <- files[order(file.info(files[substr(files, 1, 8) == date])$ctime)]
-
-    if (length(files) == 0) {
-      warning("No files found for the specified date.")
-    }
-  }
-
-  # Filter files by both date and time if specified
-  if (!is.na(date) && !is.na(time)) {
-    files.order <- files[substr(files, 1, 13) == paste0(date, "_", time)]
-
-    if (length(files.order) == 0) {
-      warning("No files found for the specified date and time.")
-    }
+    if (length(files) == 0) warning("No files found for the specified date.")
   }
 
   # Filter by manual order if specified
-  if (!is.na(order)) {
-    files.order <- rev(files.order)[order]
-  }
+  if (!is.na(order)) files.order <- rev(files.order)[order]
 
   # Read the most recent file from the ordered list
-  dat <- fread(files.order[length(files.order)],
-               sep = ";", dec = ",", encoding = "Latin-1",
-               na.strings = "")
+  dat <- fread(files.order[length(files.order)], sep = ";", dec = ",", encoding = "Latin-1", na.strings = "")
 
-  # Convert the 'Bestimmungsstart' column to POSIXct
+  # Convert 'Bestimmungsstart' column to POSIXct and order by it
   dat$Bestimmungsstart <- as.POSIXct(dat$Bestimmungsstart, tz = "UTC")
   dat <- dat[order(dat$Bestimmungsstart), ]
 
@@ -71,15 +53,12 @@ find.read.IC.database <- function(dir = wd$team_labor$datensicherung$IC,
 
   # Subset the data if 'subdat' is TRUE
   if (subdat) {
-    subcol <- c("Bestimmungsstart", "Ident", "Probentyp", "Methodenname",
-                "Verdünnung", "Bestimmungs-ID", "Bestimmungsdauer [min]",
-                grep("Info", colnames(dat), value = TRUE)[1],
-                grep("Konzentration", colnames(dat), value = TRUE),
-                grep("Kalibrierpunkte", colnames(dat), value = TRUE))
+    subcol <- c("Bestimmungsstart", "Ident", "Probentyp", "Methodenname", "Verdünnung",
+                "Bestimmungs-ID", "Bestimmungsdauer [min]", grep("Info", colnames(dat), value = TRUE)[1],
+                grep("Konzentration", colnames(dat), value = TRUE), grep("Kalibrierpunkte", colnames(dat), value = TRUE))
 
     subcol <- grep("mittelwert|anteil", subcol, invert = TRUE, value = TRUE)
 
-    # Warn about missing columns
     missing_cols <- subcol[!subcol %in% colnames(dat)]
     if (length(missing_cols) > 0) {
       warning(paste0("Columns not found: ", paste(missing_cols, collapse = ", ")))
@@ -89,22 +68,19 @@ find.read.IC.database <- function(dir = wd$team_labor$datensicherung$IC,
     dat <- dat[, ..subcol]
   }
 
-  # Filter by 'subdate' if provided
-  if (!is.na(subdate)) {
-    dat <- dat[as.Date(dat$Bestimmungsstart) >= as.Date(subdate), ]
-  }
+  # Filter data by 'subdate' if provided
+  if (!is.na(subdate)) dat <- dat[as.Date(dat$Bestimmungsstart) >= as.Date(subdate), ]
 
-  # Convert relevant character columns to numeric
+  # Convert numeric-like columns to numeric
   numeric_columns <- dat[, lapply(.SD, function(col) all(grepl("^[0-9.]+$", col)))]
   numeric_columns <- names(dat)[as.logical(unlist(numeric_columns))]
-
   dat[, (numeric_columns) := lapply(.SD, as.numeric), .SDcols = numeric_columns]
 
-  # Remove columns that are entirely empty or contain only NA
+  # Remove columns that are empty or contain only NA
   non_empty_cols <- sapply(dat, function(col) !all(is.na(col) | as.character(col) == ""))
-  dat <- dat[, names(non_empty_cols), with = F]
+  dat <- dat[, names(non_empty_cols), with = FALSE]
 
-  # Convert 'Probentyp' and 'Methodenname' to factors if present
+  # Convert certain columns to factors
   if ("Probentyp" %in% colnames(dat)) dat$Probentyp <- factor(dat$Probentyp)
   if ("Methodenname" %in% colnames(dat)) dat$Methodenname <- factor(dat$Methodenname)
 

@@ -43,14 +43,14 @@ find.read.IC.chromatogram <- function(ID) {
 
   # Process the chromatogram data
   if (any(raw_data$V1 %in% "Anionen")) {
-    Chromatogram <- process_section(raw_data, "Anionen", "Druck")
+    Chromatogram <- process_section_IC(raw_data, "Anionen", "Druck")
   } else {
     warning("Anionen chromatogram not found in the txt file.")
   }
 
   # Process the Druck data
   if (any(raw_data$V1 %in% "Druck")) {
-    Druck <- process_section(raw_data, "Druck", end_marker = NULL)
+    Druck <- process_section_IC(raw_data, "Druck", end_marker = NULL)
   } else {
     warning("Druck data not found in the txt file.")
   }
@@ -74,7 +74,7 @@ find.read.IC.chromatogram <- function(ID) {
 #' @param end_marker The marker indicating the end of the section. Default is NULL (process until the end).
 #'
 #' @return A data.table containing the processed section.
-process_section <- function(raw_data, section_name, end_marker = NULL) {
+process_section_IC <- function(raw_data, section_name, end_marker = NULL) {
   # Find the start of the section
   section_start <- which(raw_data$V1 %in% section_name) + 1
 

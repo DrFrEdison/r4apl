@@ -57,6 +57,19 @@ interflex.Clipboard <- function(dat.cb = readClipboard()) {
     dat.trs <- append(dat.trs, " ", after = i)
   }
 
+  Feiertag <- c("Tag der Einheit\t")
+
+  for(i in seq_along(Feiertag)){
+
+    for(j in 1:4)
+      dat.trs <- append(dat.trs, " ", after = (grep(Feiertag[ i ], dat.trs) - 1))
+
+
+    dat.trs <- gsub(Feiertag, gsub("\t", "", Feiertag), dat.trs)
+
+
+  }
+
   lines <- unlist(strsplit(dat.trs, " "))
   columns <- dat.trs[1:grep("Zeitkto", dat.trs)]
   dat.trs <- dat.trs[-which(dat.trs %in% columns)]
@@ -119,6 +132,8 @@ interflex.Nebenzeiteneintrag <- function(interflex.files = interflex.files, mont
   # Remove rows with empty "Ist" values or with the "Urlaub" (vacation) reason
   interflex.files.read <- interflex.files.read[nchar(interflex.files.read$Ist) > 0, ]
   interflex.files.read <- interflex.files.read[interflex.files.read$Fehlgrund != "Urlaub", ]
+  interflex.files.read <- interflex.files.read[interflex.files.read$Fehlgrund != "Anforderung eAU", ]
+  interflex.files.read <- interflex.files.read[interflex.files.read$Fehlgrund != "Krank", ]
 
   # Process Nebenzeiten data
   Nebenzeiten <- list()
