@@ -66,7 +66,7 @@ transfer.ms <- function(dat
 transfer.tcd <- function(tcd1A = NA, tcd2B, colnames = c("time", "TCD1A", "TCD2B")) {
 
   # If tcd1A is NA, return tcd2B with appropriate column names
-  if (is.na(tcd1A)) {
+  if (all(is.na(tcd1A))) {
     warning("TCD1A data is missing. Returning only TCD2B data.")
     colnames(tcd2B) <- c(colnames[1], colnames[3])  # Set appropriate column names for TCD2B
     return(tcd2B)

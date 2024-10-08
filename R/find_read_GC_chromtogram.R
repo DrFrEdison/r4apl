@@ -15,13 +15,12 @@
 #' }
 #'
 #' @export
-find.read.GC.chromatogram <- function(database = GC_MS$database) {
+find.read.GC.chromatogram <- function(database = GC_MS$database
+                                      , instrument
+                                      , wd = wd) {
 
   # Check if 'dir' column exists in the database
   if (!"dir" %in% colnames(database)) stop("The database must contain a 'dir' column.")
-
-  # Determine the instrument from the directory path
-  instrument <- substr(database$dir[1], 1, min(gregexpr("/", database$dir[1])[[1]]) - 1)
 
   # Check if the instrument directory exists in 'wd'
   if (!instrument %in% names(wd)) stop("Instrument not found in working directories.")
