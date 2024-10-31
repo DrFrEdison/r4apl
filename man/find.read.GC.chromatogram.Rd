@@ -4,7 +4,7 @@
 \alias{find.read.GC.chromatogram}
 \title{Read GC Chromatogram and Detector Data}
 \usage{
-find.read.GC.chromatogram(database = GC_MS$database)
+find.read.GC.chromatogram(database = GC_MS$database, instrument, wd = wd)
 }
 \arguments{
 \item{database}{A data frame or list containing details about the GC data, including the directory paths (\code{dir}), file basenames (\code{basename}), and detector types (\code{detector}).}
