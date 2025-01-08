@@ -16,7 +16,8 @@
 #' @export
 read.GC.ChemStation87.pdf <- function(pdf.file
                                       , amount.unit = c("\\% \\("
-                                                        , "ppm \\(")
+                                                        , "ppm \\("
+                                                        , "\\% mol")
                                       , type.pattern =c("BB", "BV", "BB N", "BB S", "BV S", "BBA", "BBAS"
                                                         , "HHA+"
                                                         , "FM"
@@ -230,10 +231,9 @@ read.GC.ChemStation87.pdf <- function(pdf.file
     colnames(dat$final$df[[ i ]]) <- c("Compound", dat$final$column.names[[ i ]][ !dat$final$column.names[[ i ]] %in% c("Grp", "Type", "Name")], "Type")
 
     # Add column units
-
     dat$final$unit[[ i ]] <- rep("", ncol(dat$final$df[[ i ]]))
     dat$final$unit[[ i ]][ which( colnames(dat$final$df[[ i ]]) %in% "Area")] <- dat$final$column.units[[ i ]][[ 1 ]][ grep("\\*", dat$final$column.units[[ i ]][[ 1 ]])]
-    dat$final$unit[[ i ]][ which( colnames(dat$final$df[[ i ]]) %in% "Amount")] <- dat$final$column.units[[ i ]][[ 1 ]][ grep(amount.unit, dat$final$column.units[[ i ]][[ 1 ]])]
+    dat$final$unit[[ i ]][ which( colnames(dat$final$df[[ i ]]) %in% "Amount")] <- dat$final$column.units[[ i ]][[ 1 ]][ unlist(lapply(amount.unit, \(x) grep(x, dat$final$column.units[[ i ]][[ 1 ]]))) ]
     dat$final$unit[[ i ]][ which( colnames(dat$final$df[[ i ]]) %in% "RetTime")] <- dat$final$column.units[[ i ]][[ 1 ]][ grep("min", dat$final$column.units[[ i ]][[ 1 ]])]
 
     # get sample info ####

@@ -57,16 +57,16 @@ interflex.Clipboard <- function(dat.cb = readClipboard()) {
     dat.trs <- append(dat.trs, " ", after = i)
   }
 
-  Feiertag <- c("Tag der Einheit\t")
+  Feiertag <- c("Tag der Einheit\t", "Allerheiligen\t", "Neujahr\t", "1.Weihnachtstag\t", "2.Weihnachtstag\t")
 
   for(i in seq_along(Feiertag)){
 
-    for(j in 1:4)
-      dat.trs <- append(dat.trs, " ", after = (grep(Feiertag[ i ], dat.trs) - 1))
+    if( length( grep(Feiertag[ i ], dat.trs) ) > 0){
+      for(j in 1:4)
+        dat.trs <- append(dat.trs, " ", after = (grep(Feiertag[ i ], dat.trs) - 1))
 
-
-    dat.trs <- gsub(Feiertag, gsub("\t", "", Feiertag), dat.trs)
-
+      dat.trs <- gsub(Feiertag[ i ], gsub("\t", "", Feiertag[ i ]), dat.trs)
+    }
 
   }
 

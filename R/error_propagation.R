@@ -19,11 +19,11 @@
 error_propagation_division <- function(mean_A, sd_A, mean_B, sd_B) {
 
   # Input validation
-  if (mean_B == 0) {
+  if (any(mean_B == 0)) {
     stop("mean_B cannot be zero, division by zero is not allowed.")
   }
 
-  if (mean_A == 0) {
+  if (any(mean_A == 0)) {
     warning("mean_A is zero, the ratio will be zero and propagated error may be large.")
   }
 

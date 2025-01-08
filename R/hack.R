@@ -72,7 +72,7 @@ hack <- function(start_time, ist_time = Sys.time(), pause_time = NA, Zeitkonto =
     Zeitkonto <- round(Zeitkonto / ifelse(remaining_time.8_unit == "min", 60, 1), 1)
 
     # Add Zeitkonto to the data frame
-    hack.heimkomm <- rbind(hack.heimkomm, c(Zeitkonto, remaining_time.8_unit))
+    hack.heimkomm <- rbind(hack.heimkomm, c(Zeitkonto, "h"))
     rownames(hack.heimkomm)[nrow(hack.heimkomm)] <- "Zeitkonto"
   }
 
@@ -92,8 +92,19 @@ Zeitkto <- function(Zeitkonto) {
 
   # Handle numeric Zeitkonto values
   if (!is.na(as.numeric(Zeitkonto))) {
+
+    if(unlist(gregexpr("\\.", Zeitkonto)) > 0){
+
     hours <- as.numeric(substr(Zeitkonto, 1, unlist(gregexpr("\\.", Zeitkonto)) - 1))
     minutes <- round(as.numeric(paste0("0.", substr(Zeitkonto, unlist(gregexpr("\\.", Zeitkonto)) + 1, nchar(Zeitkonto)))) * 60, 0)
+
+    } else {
+
+      hours <- as.numeric(Zeitkonto)
+      minutes <- 0
+
+    }
+
     return(paste0(hours, " h und ", minutes, " Minuten"))
   }
 
