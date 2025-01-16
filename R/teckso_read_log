@@ -17,7 +17,7 @@
 #' }
 #'
 #' @export
-read.teckso.log <- function(logfile, header = FALSE, sep = "\n", col.names = "log_entry") {
+teckso_read_log <- function(logfile, header = FALSE, sep = "\n", col.names = "log_entry") {
 
   # Load the log file data
   log_data <- fread(logfile, header = header, sep = sep, col.names = col.names)

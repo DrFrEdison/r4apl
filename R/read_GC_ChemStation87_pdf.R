@@ -10,11 +10,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' result <- read.GC.ChemStation87.pdf("path/to/pdf.pdf")
+#' result <- read_gc_ChemStation87_pdf("path/to/pdf.pdf")
 #' }
 #'
 #' @export
-read.GC.ChemStation87.pdf <- function(pdf.file
+read_gc_ChemStation87_pdf <- function(pdf.file
                                       , amount.unit = c("\\% \\("
                                                         , "ppm \\("
                                                         , "\\% mol")

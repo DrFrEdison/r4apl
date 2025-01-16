@@ -1,4 +1,4 @@
-load.GC.TCD.calibration <- function(date.pattern, cal.dir, sub = T){
+read_GC_TCD_calibration <- function(date.pattern, cal.dir, sub = T){
 
   is.dir <- getwd()
   setwd(cal.dir)

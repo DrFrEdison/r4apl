@@ -14,11 +14,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' convert_mol_to_Einwaage(SOLL_concentration = 10, SOLL_unit = "mmol/L", Volume = 1, substance = "NaCl")
+#' convert_mol_to_weighin(SOLL_concentration = 10, SOLL_unit = "mmol/L", Volume = 1, substance = "NaCl")
 #' }
 #'
 #' @export
-convert_mol_to_Einwaage <- function(SOLL_concentration = c(1, 50),
+convert_mol_to_weighin <- function(SOLL_concentration = c(1, 50),
                                     SOLL_unit = "mmol/L",
                                     return_unit = "g",
                                     Volume = 2,

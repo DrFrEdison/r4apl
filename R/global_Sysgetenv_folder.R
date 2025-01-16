@@ -11,11 +11,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' find.Sys.getenv.folder(x = "LOCALAPPDATA", pattern = "Teckso", pattern2 = "GmbH")
+#' find_Sys_getenv_folder(x = "LOCALAPPDATA", pattern = "Teckso", pattern2 = "GmbH")
 #' }
 #'
 #' @export
-find.Sys.getenv.folder <- function(x = "LOCALAPPDATA", pattern = "Teckso", pattern2 = "GmbH") {
+find_Sys_getenv_folder <- function(x = "LOCALAPPDATA", pattern = "Teckso", pattern2 = "GmbH") {
 
   # Get the system environment path
   dir.x <- Sys.getenv(x)

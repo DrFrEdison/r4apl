@@ -13,11 +13,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' find.read.IC.database(date = "20240701", time = "1200")
+#' read_ic_database(date = "20240701", time = "1200")
 #' }
 #'
 #' @export
-find.read.IC.database <- function(dir = wd$team_labor$datensicherung$IC,
+read_ic_database <- function(dir = wd$hw$Datensicherung$IC$root,
                                   date = NA,
                                   order = NA,
                                   subdat = TRUE,

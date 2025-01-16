@@ -12,11 +12,11 @@
 #' @examples
 #' \dontrun{
 #' # Load a calibration file for IC instrument of type "area" from a specific date
-#' calibration_data <- calibration.file(instrument = "IC", type = "area", date = "2024-07-01")
+#' calibration_data <- calibration_file(instrument = "IC", type = "area", date = "2024-07-01")
 #' }
 #'
 #' @export
-calibration.file <- function(instrument = instrument, 
+calibration_file <- function(instrument = instrument, 
                              type = type, 
                              date = datep, 
                              path = wd$cal) {
@@ -50,12 +50,12 @@ calibration.file <- function(instrument = instrument,
 #' @examples
 #' \dontrun{
 #' # Generate a calibration matrix from a list of calibration models
-#' calibration_data <- calibration.file(instrument = "IC", type = "area", date = "2024-07-01")
-#' cal_matrix <- calibration.matrix(cal.file = calibration_data)
+#' calibration_data <- calibration_file(instrument = "IC", type = "area", date = "2024-07-01")
+#' cal_matrix <- calibration_matrix(cal.file = calibration_data)
 #' }
 #'
 #' @export
-calibration.matrix <- function(cal.file = cal.file) {
+calibration_matrix <- function(cal.file = cal.file) {
   
   # Extract the model data from each calibration file and combine them into a matrix
   cal.model <- do.call(cbind, lapply(cal.file, function(x) x$model))

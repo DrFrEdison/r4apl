@@ -1,4 +1,4 @@
-time.range.GC.chromatogram <- function(dat = GC_MS$raw){
+gc_retention_time_range <- function(dat = GC_MS$raw){
 
   timerange <- dat %>%
     lapply(function(gc) {
@@ -24,7 +24,7 @@ time.range.GC.chromatogram <- function(dat = GC_MS$raw){
 
 }
 
-clean_gc_data <- function(GC_MS, time_range = list(GC_MS = 0.2, GC_TCD1A = 0.25, GC_TCD2B = 0.25)) {
+gc_clean_data <- function(GC_MS, time_range = list(GC_MS = 0.2, GC_TCD1A = 0.25, GC_TCD2B = 0.25)) {
 
   # Check and remove invalid GC_MS entries
   if(!is.null(GC_MS$raw$GC_MS)){

@@ -9,11 +9,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' pca.lab(pca = powerco$pca$GC, ncomp = 1)
+#' pca_lab(pca = powerco$pca$GC, ncomp = 1)
 #' }
 #'
 #' @export
-pca.lab <- function(pca = powerco$pca$GC, ncomp = 1) {
+pca_lab <- function(pca = powerco$pca$GC, ncomp = 1) {
   return(paste0("PC", ncomp, ", Explained Variance = ", round(pca$calres$expvar[ncomp], 1), "%"))
 }
 

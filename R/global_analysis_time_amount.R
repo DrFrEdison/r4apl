@@ -9,7 +9,7 @@
 #'
 #' @return A message string describing the expected completion time.
 #' @export
-analysis.time <- function(sample.duration, samples.to.go, time = Sys.time(), unit = c("h", "min")) {
+analysis_time <- function(sample.duration, samples.to.go, time = Sys.time(), unit = c("h", "min")) {
   unit <- match.arg(unit)
   
   samples.ready <- sample.duration * samples.to.go * 60 + time
@@ -39,7 +39,7 @@ analysis.time <- function(sample.duration, samples.to.go, time = Sys.time(), uni
 #'
 #' @return A message string describing the expected completion time.
 #' @export
-analysis.amount <- function(sample.duration
+analysis_amount <- function(sample.duration
                             , medium.flow
                             , unit.flow = "mL/min") {
   unit.flow <- match.arg(unit.flow)

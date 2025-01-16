@@ -11,11 +11,11 @@
 #' @examples
 #' \dontrun{
 #' # Assuming GC_MS$database is a data frame with the necessary fields
-#' gc_data <- find.read.GC.chromatogram(database = GC_MS$database)
+#' gc_data <- read_gc_chromatogram(database = GC_MS$database)
 #' }
 #'
 #' @export
-find.read.GC.chromatogram <- function(database = GC_MS$database
+read_gc_chromatogram <- function(database = GC_MS$database
                                       , instrument
                                       , wd = wd) {
 

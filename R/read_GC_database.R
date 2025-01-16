@@ -14,11 +14,11 @@
 #' @examples
 #' \dontrun{
 #' # Read GC database and filter by date and time
-#' find.read.GC.database(date = "20240701", time = "1200")
+#' read_gc_database(date = "20240701", time = "1200")
 #' }
 #'
 #' @export
-find.read.GC.database <- function(dir = c(wd$GC_MS$data, wd$GC_FID_TCD$data),
+read_gc_database <- function(dir = c(wd$GC_MS$data, wd$GC_FID_TCD$data),
                                   date = NA,
                                   time = NA,
                                   order = NA,

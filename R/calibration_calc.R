@@ -16,7 +16,7 @@
 #' \dontrun{
 #' final_conc <- calibration.calc(area = 1500, instrument = "IC", substance = "NaCl", date = "2024-01-01")
 #' }
-calibration.calc <- function(area,
+calibration_calc <- function(area,
                              calibration_model = cal.file,
                              substance,
                              dilution = 1,

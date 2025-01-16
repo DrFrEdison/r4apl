@@ -30,7 +30,7 @@ replace_german_days <- function(date_string) {
 #' @return A data frame with processed Interflex data.
 #'
 #' @export
-interflex.Clipboard <- function(dat.cb = readClipboard()) {
+interflex_Clipboard <- function(dat.cb = readClipboard()) {
 
   input_string <- dat.cb[grep("Journal", dat.cb)]
 
@@ -106,7 +106,7 @@ interflex.Clipboard <- function(dat.cb = readClipboard()) {
 
   # Write Interflex data to a file
   Date <- max(interflex.df$Datum)
-  fwrite(interflex.df, paste0(wd$D$data$interflex, substr(datetime(as.character(Date)), 1, 4), "_interflex.csv"), row.names = FALSE, sep = ";", dec = ",")
+  fwrite(interflex.df, file.path(wd$data$interflex, paste0(substr(datetime(as.character(Date)), 1, 4), "_interflex.csv")), row.names = FALSE, sep = ";", dec = ",")
 }
 
 
@@ -121,13 +121,13 @@ interflex.Clipboard <- function(dat.cb = readClipboard()) {
 #' @return A list containing processed Nebenzeiteneintrag data, including the date and day of the week.
 #'
 #' @export
-interflex.Nebenzeiteneintrag <- function(interflex.files = interflex.files, month = month(Sys.Date()), year = year(Sys.Date())) {
+interflex_Nebenzeiteneintrag <- function(interflex.files = interflex.files, month = month(Sys.Date()), year = year(Sys.Date())) {
 
   year <- substr(year, 3, 4)
   month <- formatC(x = month, digits = 2, width = 2, flag = "0")
 
   interflex.files <- interflex.files[substr(interflex.files, 1, 4) %in% paste0(year, month)]
-  interflex.files.read <- fread(paste0(wd$D$data$interflex, interflex.files))
+  interflex.files.read <- fread(file.path(wd$data$interflex, interflex.files))
 
   # Remove rows with empty "Ist" values or with the "Urlaub" (vacation) reason
   interflex.files.read <- interflex.files.read[nchar(interflex.files.read$Ist) > 0, ]
@@ -181,7 +181,7 @@ interflex.Nebenzeiteneintrag <- function(interflex.files = interflex.files, mont
 #' @return This function renames files in the specified directory but does not return a value.
 #'
 #' @details
-#' The function looks for files in the directory specified by `wd$r4apl$master`, and renames files following the pattern
+#' The function looks for files in the directory specified by `wd$R$master`, and renames files following the pattern
 #' "interflex_Zeitkto_IST" to the format "interflex_Zeitkto_<Zeitkto>_Beginn_<Time>" where `Zeitkto` and `Beginn` come
 #' from the provided `dat1` argument.
 #'
@@ -197,13 +197,13 @@ interflex_Zeitkto_Beginn <- function(dat1 = interflex.out) {
   ist.path <- getwd()
 
   # Search for files in the specified directory with the pattern "interflex_Zeitkto_"
-  Zeitkto_Beginn_IST <- dir(path = wd$r4apl$master, pattern = "interflex_Zeitkto_")
+  Zeitkto_Beginn_IST <- dir(path = wd$R$master, pattern = "interflex_Zeitkto_")
 
   # Create the target filename by appending Zeitkto and processed 'Beginn' time
-  Zeitkto_Beginn_SOLL <- file.path(wd$r4apl$master, paste0("interflex_Zeitkto_", dat1$Zeitkto, "_Beginn_", gsub("\\:", "", dat1$Beginn)))
+  Zeitkto_Beginn_SOLL <- file.path(wd$R$master, paste0("interflex_Zeitkto_", dat1$Zeitkto, "_Beginn_", gsub("\\:", "", dat1$Beginn)))
 
   # Change working directory to the master folder
-  setwd(wd$r4apl$master)
+  setwd(wd$R$master)
 
   # Rename files, but check if files exist first
   if (length(Zeitkto_Beginn_IST) > 0) {

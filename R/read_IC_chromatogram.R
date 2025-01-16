@@ -8,11 +8,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' find.read.IC.chromatogram(ID = "20240701_1234")
+#' read_ic_chromatogram(ID = "20240701_1234")
 #' }
 #'
 #' @export
-find.read.IC.chromatogram <- function(ID) {
+read_ic_chromatogram <- function(ID) {
 
   # Define file paths and search for the correct file
   txt_dir <- file.path(wd$team_labor$datensicherung$IC, "txt/")
@@ -74,7 +74,7 @@ find.read.IC.chromatogram <- function(ID) {
 #' @param end_marker The marker indicating the end of the section. Default is NULL (process until the end).
 #'
 #' @return A data.table containing the processed section.
-process_section_IC <- function(raw_data, section_name, end_marker = NULL) {
+process_section_ic <- function(raw_data, section_name, end_marker = NULL) {
   # Find the start of the section
   section_start <- which(raw_data$V1 %in% section_name) + 1
 
