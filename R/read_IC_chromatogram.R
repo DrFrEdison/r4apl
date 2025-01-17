@@ -15,7 +15,7 @@
 read_ic_chromatogram <- function(ID) {
 
   # Define file paths and search for the correct file
-  txt_dir <- file.path(wd$team_labor$datensicherung$IC, "txt/")
+  txt_dir <- wd$hw$Datensicherung$IC$txt
   txt_files <- dir(txt_dir, pattern = "*.txt$")
 
   # Find the matching file based on the sample ID
@@ -43,14 +43,14 @@ read_ic_chromatogram <- function(ID) {
 
   # Process the chromatogram data
   if (any(raw_data$V1 %in% "Anionen")) {
-    Chromatogram <- process_section_IC(raw_data, "Anionen", "Druck")
+    Chromatogram <- process_section_ic(raw_data, "Anionen", "Druck")
   } else {
     warning("Anionen chromatogram not found in the txt file.")
   }
 
   # Process the Druck data
   if (any(raw_data$V1 %in% "Druck")) {
-    Druck <- process_section_IC(raw_data, "Druck", end_marker = NULL)
+    Druck <- process_section_ic(raw_data, "Druck", end_marker = NULL)
   } else {
     warning("Druck data not found in the txt file.")
   }

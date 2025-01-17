@@ -17,7 +17,7 @@
 #' }
 #'
 #' @export
-teckso_read_log <- function(logfile, header = FALSE, sep = "\n", col.names = "log_entry") {
+read_teckso_log <- function(logfile, header = FALSE, sep = "\n", col.names = "log_entry") {
 
   # Load the log file data
   log_data <- fread(logfile, header = header, sep = sep, col.names = col.names)
@@ -35,6 +35,7 @@ teckso_read_log <- function(logfile, header = FALSE, sep = "\n", col.names = "lo
 
   # Clean up messages by removing specific tags
   log_data$message <- gsub("\\[TAG\\=TERMINAL\\,PRIO=MSG\\]", "", log_data$message)
+  log_data$message <- gsub("\\[OV\\:PR\\]", "", log_data$message)
 
   # Reduce multiple spaces to a single space in the message
   for (i in 1:4) log_data$message <- gsub("\\s{2,}", " ", log_data$message)
@@ -56,12 +57,31 @@ teckso_read_log <- function(logfile, header = FALSE, sep = "\n", col.names = "lo
     return(data.frame(datetime = pressure_timestamps, pressure = pressure_values, unit = pressure_units))
   }
 
+  # No pressure ####
+  nopressure_logs <- grep("mBar", log_data$message, invert = T)
+  nopressure_datetime <- log_data$timestamp[nopressure_logs]
+  nopressure_return <- data.frame(datetime = as.character(log_data$timestamp[ nopressure_logs ])
+                                  , Status = log_data$message[ nopressure_logs ])
+
+
+  # Which timeline is running?
+  TLtext <- nopressure_return$Status[ max(grep("TL", nopressure_return$Status, ignore.case = F)) ]
+  Timeline <- as.numeric( substr(TLtext, unlist(gregexpr("TL", TLtext)) + 2, unlist(gregexpr("TL", TLtext)) + 3) )
+
+  # Position of the MPV1
+  MPV1 <- nopressure_return$Status[ max(grep("MPVS 1", nopressure_return$Status)) ]
+  MPV1 <- as.numeric(substr(MPV1, unlist(gregexpr("\\=GO", MPV1)) + 3, nchar(MPV1)))
+
   # Process logs for Pressure P1 and P2
   pressure_logs_P1 <- process_pressure_logs("P1", log_data)
   pressure_logs_P2 <- process_pressure_logs("P2", log_data)
 
   # Return the pressure logs for P1 and P2 as a list
-  returnlist <- list(Pressure_P1 = pressure_logs_P1, Pressure_P2 = pressure_logs_P2)
+  returnlist <- list(Pressure_P1 = pressure_logs_P1
+                     , Pressure_P2 = pressure_logs_P2
+                     , Status = nopressure_return
+                     , MPV1 = MPV1
+                     , Timeline = Timeline)
 
   return(returnlist)
 }
