@@ -70,6 +70,15 @@ interflex_Clipboard <- function(dat.cb = readClipboard()) {
 
   }
 
+
+  # fehlt unentschuldigt ####
+  for(i in rev(grep("fehlt unentschuldigt", dat.trs))){
+
+    for(j in 1:4)
+      dat.trs <- append(dat.trs, " ", after = i - 1)
+
+  }
+
   lines <- unlist(strsplit(dat.trs, " "))
   columns <- dat.trs[1:grep("Zeitkto", dat.trs)]
   dat.trs <- dat.trs[-which(dat.trs %in% columns)]
