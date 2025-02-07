@@ -70,14 +70,18 @@ read_teckso_log <- function(logfile, header = FALSE, sep = "\n", col.names = "lo
   return(returnlist)
 }
 
-read_teckso_log_fast <- function(logfile, header = FALSE, sep = "\n", col.names = "log_entry") {
+read_teckso_log_fast <- function(logfile
+                                 , header = FALSE
+                                 , sep = "\n"
+                                 , col.names = "log_entry"
+                                 , n = 2500) {
 
   # Skip unnecessary reads
   total_lines <- length(readLines(logfile, warn = FALSE))
-  skip_lines <- max(0, total_lines - 2500)
+  skip_lines <- max(0, total_lines - n)
 
   # Load the last 2500 lines efficiently
-  log_data <- fread(logfile, header = header, sep = sep, col.names = col.names, skip = skip_lines, nrows = 2500)
+  log_data <- fread(logfile, header = header, sep = sep, col.names = col.names, skip = skip_lines, nrows = n)
 
   log_data[, timestamp := sub("\\].*", "", log_entry)]
   log_data[, timestamp := sub("\\[", "", timestamp)]  # Remove `[`
@@ -130,11 +134,21 @@ process_pressure_logs <- function(pressure_type, log_data) {
   pressure_logs <- grep("mBar", log_data$message)
   pressure_logs <- pressure_logs[grep(pressure_type, log_data$message[pressure_logs])]
   pressure_grep <- gregexpr("mBar", log_data$message[pressure_logs])
+  blank_grep <- gregexpr(" ", log_data$message[pressure_logs])
 
   # Extract pressure values and units
-  pressure_values <- substr(log_data$message[pressure_logs], unlist(pressure_grep) - 7, unlist(pressure_grep) + 3)
+  pressure_values <- mapply( function(message, blank, pressure){
+
+    substr(message, blank[ max( which( blank < pressure)) - 1 ], pressure - 1)
+
+  }
+  , message = log_data$message[pressure_logs]
+  , blank = blank_grep
+  , pressure = pressure_grep
+  , SIMPLIFY = F)
+
   pressure_units <- gsub("\\s", "", substr(pressure_values, 7, nchar(pressure_values)))
-  pressure_values <- as.numeric(substr(pressure_values, 1, 6))
+  pressure_values <- as.numeric(pressure_values)
 
   # Extract the corresponding timestamps
   pressure_timestamps <- log_data$timestamp[pressure_logs]
@@ -149,3 +163,77 @@ get_latest_file <- function(file_ending = "\\.log", file_pattern = "Terminal") {
   latest_file <- log_files[which.max(file.info(log_files)$mtime)]
   return(latest_file)
 }
+
+read_teckso_log_fast_multiple <- function(logfile
+                                          , header = FALSE
+                                          , sep = "\n"
+                                          , col.names = "log_entry"
+                                          , names = c("DNPH", "Waschflaschen")
+                                          , n = 2500) {
+
+  # Skip unnecessary reads
+  total_lines <- lapply(logfile, function( x ) length( readLines(x, warn = F)))
+  total_lines <- lapply(logfile, function( x ) length( readLines(x, warn = F)))
+
+  skip_lines <- lapply(total_lines, function( x ) max(0, x - n))
+
+  # Load the last 2500 lines efficiently
+  log_data <- mapply(function( x,y ) fread(x, header = header, sep = sep, col.names = col.names, skip = y, nrows = n)
+                     , x = logfile
+                     , y = skip_lines
+                     , SIMPLIFY = F)
+  names(log_data) <- names
+
+  log_data <- lapply(log_data, function( x ) x[, timestamp := sub("\\].*", "", log_entry)])
+  log_data <- lapply(log_data, function( x ) x[, timestamp := sub("\\[", "", timestamp)])  # Remove `[`
+  log_data <- lapply(log_data, function( x ) x[, elapsed_time := sub(".*\\((.*?)\\).*", "\\1", log_entry)])
+  log_data <- lapply(log_data, function( x ) x[, message := sub(".*\\): ", "", log_entry)])
+
+  # remove rows ####
+  ii <- seq_along(log_data)
+  for(i in ii)  if(length(grep("OG:D", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("OG:D", log_data[[ i ]]$message) , ]
+  for(i in ii)  if(length(grep("OV:PR", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("OV:PR", log_data[[ i ]]$message) , ]
+  for(i in ii)  if(length(grep("MT:MET_RUN", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("MT:MET_RUN", log_data[[ i ]]$message) , ]
+  for(i in ii)  if(length(grep("OT:Icon", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("OT:Icon", log_data[[ i ]]$message) , ]
+
+  # Convert timestamp to POSIXct and format to include milliseconds
+  options(digits.secs = 3)
+  log_data <- lapply(log_data, function( x ) x[, timestamp := as.POSIXct(timestamp, format = "%Y.%m.%d-%H:%M:%S")])
+
+  # Clean up messages by removing specific tags efficiently
+  log_data <- lapply(log_data, function( x ) x[, message := gsub("\\[TAG\\=TERMINAL\\,PRIO=MSG\\]|\\[OV\\:PR\\]", "", message)])
+
+  # Reduce multiple spaces to a single space
+  log_data <- lapply(log_data, function( x ) x[, message := gsub("\\s{2,}", " ", message)])
+
+  # Identify non-pressure logs efficiently
+  nopressure_logs <- lapply(log_data, function( x ) x[!grepl("mBar", message)])
+  nopressure_return <- lapply(nopressure_logs, function( x ) x[, .(datetime = timestamp, Status = message)])
+
+  # Identify Timeline from logs
+  Timeline <- lapply(nopressure_return, function( x ) last(grep("TL", x$Status, value = T)))
+
+  # Identify MPV1 Position
+  MPV1 <- lapply(nopressure_return, function( x ) last(grep("MPVS 1=2", x$Status, value = T)))
+  MPV1 <- lapply(MPV1, function( x ) as.numeric(substr(x, regexpr("GO", x) + 2, nchar(x))))
+
+  # Identify Wert
+  Wert <- lapply(nopressure_return, function( x ) last(grep("Wert=", x$Status, value = T)))
+  Wert <- lapply(Wert, function( x ) as.numeric(substr(x, regexpr("Wert=", x) + 5, nchar(x))))
+  Wert <- lapply(Wert, function( x ) x/100)
+
+  # Process logs for Pressure P1 and P2
+  pressure_logs_P1 <- lapply(log_data, function( x ) process_pressure_logs(pressure_type = "P1", log_data = x))
+  pressure_logs_P2 <- lapply(log_data, function( x ) process_pressure_logs("P2", x))
+
+  # Return the processed data as a list
+  return(list(
+    Pressure_P1 = pressure_logs_P1,
+    Pressure_P2 = pressure_logs_P2,
+    Status = nopressure_return,
+    MPV1 = MPV1,
+    Timeline = Timeline,
+    Wert = Wert
+  ))
+}
+
