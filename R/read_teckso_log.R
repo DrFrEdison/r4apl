@@ -35,7 +35,7 @@ read_teckso_log <- function(logfile
                        x = logfile, y = skip_lines, SIMPLIFY = FALSE)
   } else {
     # Load entire file if `n` is NA
-    log_data <- lapply(logfile, function(x) fread(x, header = header, sep = sep, col.names = col.names))
+    log_data <- lapply(logfile, function(x) fread(x, header = F, sep = "\n", col.names = "log_entry"))
   }
 
   # Assign proper names
@@ -148,14 +148,22 @@ process_pressure_logs <- function(pressure_type, log_data) {
 #'
 #' @param file_ending A string specifying the file extension to look for (default is `".log"`).
 #' @param file_pattern A regex pattern to filter filenames (default is `"Terminal"`).
+#' @param n How many files should be shown(default is `1`).
 #'
 #' @return A string representing the most recently modified file matching the pattern.
 #'
 #' @export
-get_latest_file <- function(file_ending = "\\.log", file_pattern = "Terminal") {
+get_latest_file <- function(file_ending = "\\.log", file_pattern = "Terminal", n = 1, path = wd$local$MultiTec5) {
+
+  old.path <- getwd()
+  setwd(path)
+
   log_files <- list.files(pattern = file_ending)
   log_files <- grep(pattern = file_pattern, x = log_files, value = TRUE)
   if (length(log_files) == 0) return(NULL)
-  latest_file <- log_files[which.max(file.info(log_files)$mtime)]
+
+  latest_file <- tail( log_files[ order(file.info(log_files)$mtime, decreasing = T) ], n)
+  setwd(old.path)
+
   return(latest_file)
 }

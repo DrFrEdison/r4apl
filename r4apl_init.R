@@ -3,6 +3,8 @@ renv::status()
 renv::update()
 # renv::record("renv@1.1.1")
 renv::snapshot()
+renv::paths$root() <- "Z://Mitarbeiter//Kurtz Markus//R//utilities//r4apl_renv"
+
 
 # Here is a step-by-step guide to create your R package called "r4apl":
 
