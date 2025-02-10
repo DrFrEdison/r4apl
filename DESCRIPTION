@@ -1,19 +1,24 @@
 Package: r4apl
 Type: Package
-Title: A Package for Analysis and Processing data for APL with focus on GC-XX, IC & HPLC data
-Version: 0.0.0.9000
+Title: A Package for Analysis and Processing Data for APL with Focus on GC-MS/TCD/FID, IC & HPLC
+Version: 0.1.0
 Authors@R: 
-    person("Markus", "Kurtz", , "markus.kurtz@apl-landau.de", role = c("aut", "cre"))
-Description: The 'r4apl' package provides a suite of tools for processing data from various analytical techniques, including Gas Chromatography-Mass Spectrometry (GC-MS), Flame Ionization Detection (FID), Thermal Conductivity Detection (TCD), Ion Chromatography (IC), and High-Performance Liquid Chromatography (HPLC). Additional functions for data analysis and visualization across these platforms are also included.
+    person("Markus", "Kurtz", email = "markus.kurtz@apl-landau.de", role = c("aut", "cre"))
+Description: The 'r4apl' package provides a suite of tools for processing data from various analytical techniques, 
+    including Gas Chromatography-Mass Spectrometry (GC-MS), Flame Ionization Detection (GC-FID), 
+    Thermal Conductivity Detection (GC-TCD), Ion Chromatography (IC), and High-Performance Liquid Chromatography (HPLC). 
+    Additional functions for data analysis and visualization across these platforms are also included.
 License: MIT + file LICENSE
 Encoding: UTF-8
+Depends: R (>= 4.0.0)
 Imports: 
-    dplyr,
-	  tidyr,
-    data.table,
+    dplyr (>= 1.1.0),
+    tidyr (>= 1.2.1),
+    data.table (>= 1.14.0),
     plotly
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    ggplot2
 Config/testthat/edition: 3

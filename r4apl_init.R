@@ -1,18 +1,27 @@
-# Here’s a step-by-step guide to create your R package called "r4apl":
+# Renv functions ####
+renv::status()
+renv::update()
+# renv::record("renv@1.1.1")
+renv::snapshot()
+
+# Here is a step-by-step guide to create your R package called "r4apl":
 
 # Step 1: Install Required Packages
 install.packages("devtools")
 install.packages("roxygen2")
+install.packages("this.path")
 
 # Step 2: Set Up Package Directory
-setwd( "D:/")
-devtools::create("r4apl")
+setwd(this.path::this.dir())
 
 # Step 3: Edit the DESCRIPTION File
+file.edit("DESCRIPTION")
+usethis::use_version("minor")  # Options: "patch", "minor", "major", "dev"
 
 # Step 4: Add Functions
 
 # Step 5: Document Your Package
+# unlink("NAMESPACE")  # Deletes old NAMESPACE
 devtools::document()
 
 # Step 6: Build and Install the Package

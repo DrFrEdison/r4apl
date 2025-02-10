@@ -1,232 +1,104 @@
-#' Read and Process Teckso Log File
+library(data.table)
+
+#' Read and Process Multiple Teckso Log Files
 #'
-#' This function reads a Teckso log file, extracts relevant information such as timestamps, elapsed time, and messages,
-#' and specifically processes pressure logs for P1 and P2 (in mBar). It returns pressure readings along with their corresponding timestamps.
+#' This function reads multiple Teckso log files, extracts timestamps, elapsed time, messages,
+#' and processes pressure logs for P1 and P2 (in mBar). It returns structured pressure readings,
+#' status logs, MPV positions, timelines, and computed values.
 #'
-#' @param logfile A string representing the path to the log file.
-#' @param header Logical, indicating whether the file contains a header. Default is FALSE.
-#' @param sep A string representing the separator used in the log file. Default is newline (`"\n"`).
-#' @param col.names A string or vector of strings representing column names for the log entries. Default is "log_entry".
+#' @param logfile A vector of file paths to Teckso log files.
+#' @param names A character vector specifying labels for each log file. Default is `c("DNPH", "Waschflaschen")`.
+#' @param n Number of lines to read from each file (to limit memory usage). Default is `2500`. Can be '`NA`, then all lines are read
 #'
-#' @return A list containing two data frames: one for pressure readings of P1 and one for pressure readings of P2.
-#' Each data frame contains datetime, pressure, and unit columns.
-#'
-#' @examples
-#' \dontrun{
-#' log_data <- read.teckso.log(logfile = "path/to/teckso.log")
-#' }
+#' @return A list containing:
+#' - `Pressure_P1`: Pressure readings for P1 across all logs.
+#' - `Pressure_P2`: Pressure readings for P2 across all logs.
+#' - `Status`: Status messages for each log.
+#' - `MPV1`: Most recent MPV1 position from logs.
+#' - `Timeline`: The most recent active timeline.
+#' - `Wert`: Computed values extracted from logs.
 #'
 #' @export
-read_teckso_log <- function(logfile, header = FALSE, sep = "\n", col.names = "log_entry") {
+read_teckso_log <- function(logfile
+                            , names = c("DNPH", "Waschflaschen")
+                            , n = 2500) {
+  # Ensure file paths are provided
+  if (length(logfile) == 0) stop("No log files provided.")
 
-  # Load the log file data
-  log_data <- fread(logfile, header = header, sep = sep, col.names = col.names)
+  if (!is.na(n)) {
+    # Determine the number of lines to skip
+    total_lines <- lapply(logfile, function(x) length(readLines(x, warn = FALSE)))
+    skip_lines <- lapply(total_lines, function(x) max(0, x - n))
 
-  # Extract the timestamp, elapsed time, and message from log entries
-  log_data[, `:=`(
-    timestamp = sub("\\[(.*?)\\].*", "\\1", log_entry),
-    elapsed_time = sub(".*\\((.*?)\\).*", "\\1", log_entry),
-    message = sub(".*\\): (.*)", "\\1", log_entry)
-  )]
-
-  # Convert timestamp to POSIXct and format to include milliseconds
-  options(digits.secs = 3)
-  log_data[, timestamp := as.POSIXct(timestamp, format = "%Y.%m.%d-%H:%M:%S")]
-
-  # Clean up messages by removing specific tags
-  log_data$message <- gsub("\\[TAG\\=TERMINAL\\,PRIO=MSG\\]", "", log_data$message)
-  log_data$message <- gsub("\\[OV\\:PR\\]", "", log_data$message)
-  log_data$message <- gsub("\\[ME:VPR\\]", "", log_data$message)
-
-  # Reduce multiple spaces to a single space in the message
-  for (i in 1:4) log_data$message <- gsub("\\s{2,}", " ", log_data$message)
-
-  # No pressure ####
-  nopressure_logs <- grep("mBar", log_data$message, invert = T)
-  nopressure_datetime <- log_data$timestamp[nopressure_logs]
-  nopressure_return <- data.frame(datetime = as.character(log_data$timestamp[ nopressure_logs ])
-                                  , Status = log_data$message[ nopressure_logs ])
-
-
-  # Which timeline is running?
-  TLtext <- nopressure_return$Status[ max(grep("TL", nopressure_return$Status, ignore.case = F)) ]
-  Timeline <- as.numeric( substr(TLtext, unlist(gregexpr("TL", TLtext)) + 2, unlist(gregexpr("TL", TLtext)) + 3) )
-
-  # Position of the MPV1
-  MPV1 <- nopressure_return$Status[ max(grep("MPVS 1", nopressure_return$Status)) ]
-  MPV1 <- as.numeric(substr(MPV1, unlist(gregexpr("\\=GO", MPV1)) + 3, nchar(MPV1)))
-
-  # Process logs for Pressure P1 and P2
-  pressure_logs_P1 <- process_pressure_logs("P1", log_data)
-  pressure_logs_P2 <- process_pressure_logs("P2", log_data)
-
-  # Return the pressure logs for P1 and P2 as a list
-  returnlist <- list(Pressure_P1 = pressure_logs_P1
-                     , Pressure_P2 = pressure_logs_P2
-                     , Status = nopressure_return
-                     , MPV1 = MPV1
-                     , Timeline = Timeline)
-
-  return(returnlist)
-}
-
-read_teckso_log_fast <- function(logfile
-                                 , header = FALSE
-                                 , sep = "\n"
-                                 , col.names = "log_entry"
-                                 , n = 2500) {
-
-  # Skip unnecessary reads
-  total_lines <- length(readLines(logfile, warn = FALSE))
-  skip_lines <- max(0, total_lines - n)
-
-  # Load the last 2500 lines efficiently
-  log_data <- fread(logfile, header = header, sep = sep, col.names = col.names, skip = skip_lines, nrows = n)
-
-  log_data[, timestamp := sub("\\].*", "", log_entry)]
-  log_data[, timestamp := sub("\\[", "", timestamp)]  # Remove `[`
-  log_data[, elapsed_time := sub(".*\\((.*?)\\).*", "\\1", log_entry)]
-  log_data[, message := sub(".*\\): ", "", log_entry)]
-
-  # remove rows ####
-  if(length(grep("OG:D", log_data$message)) > 0) log_data <- log_data[ - grep("OG:D", log_data$message) , ]
-
-  # Convert timestamp to POSIXct and format to include milliseconds
-  options(digits.secs = 3)
-  log_data[, timestamp := as.POSIXct(timestamp, format = "%Y.%m.%d-%H:%M:%S")]
-
-  # Clean up messages by removing specific tags efficiently
-  log_data[, message := gsub("\\[TAG\\=TERMINAL\\,PRIO=MSG\\]|\\[OV\\:PR\\]", "", message)]
-
-  # Reduce multiple spaces to a single space
-  log_data[, message := gsub("\\s{2,}", " ", message)]
-
-  # Identify non-pressure logs efficiently
-  nopressure_logs <- log_data[!grepl("mBar", message)]
-  nopressure_return <- nopressure_logs[, .(datetime = timestamp, Status = message)]
-
-  # Identify Timeline from logs
-  timeline_match <- nopressure_return[grepl("TL", Status), .SD[.N], by = .(Status)]$Status
-  Timeline <- as.numeric(substr(timeline_match, regexpr("TL", timeline_match) + 2, regexpr("TL", timeline_match) + 3))
-  Timeline <- Timeline[ length(Timeline) ]
-
-  # Identify MPV1 Position
-  MPV1_match <- nopressure_return[grepl("MPVS 1", Status), .SD[.N], by = .(Status)]$Status
-  MPV1_match <- MPV1_match[ length(MPV1_match) ]
-  MPV1 <- as.numeric(substr(MPV1_match, regexpr("GO", MPV1_match) + 2, nchar(MPV1_match)))
-
-  # Process logs for Pressure P1 and P2
-  pressure_logs_P1 <- process_pressure_logs("P1", log_data)
-  pressure_logs_P2 <- process_pressure_logs("P2", log_data)
-
-  # Return the processed data as a list
-  return(list(
-    Pressure_P1 = pressure_logs_P1,
-    Pressure_P2 = pressure_logs_P2,
-    Status = nopressure_return,
-    MPV1 = MPV1,
-    Timeline = Timeline
-  ))
-}
-
-# Function to process pressure logs for a given pressure type (P1 or P2)
-process_pressure_logs <- function(pressure_type, log_data) {
-  pressure_logs <- grep("mBar", log_data$message)
-  pressure_logs <- pressure_logs[grep(pressure_type, log_data$message[pressure_logs])]
-  pressure_grep <- gregexpr("mBar", log_data$message[pressure_logs])
-  blank_grep <- gregexpr(" ", log_data$message[pressure_logs])
-
-  # Extract pressure values and units
-  pressure_values <- mapply( function(message, blank, pressure){
-
-    substr(message, blank[ max( which( blank < pressure)) - 1 ], pressure - 1)
-
+    # Load only the last `n` lines for efficiency
+    log_data <- mapply(function(x, y) fread(x, header = F, sep = "\n", col.names = "log_entry", skip = y, nrows = n),
+                       x = logfile, y = skip_lines, SIMPLIFY = FALSE)
+  } else {
+    # Load entire file if `n` is NA
+    log_data <- lapply(logfile, function(x) fread(x, header = header, sep = sep, col.names = col.names))
   }
-  , message = log_data$message[pressure_logs]
-  , blank = blank_grep
-  , pressure = pressure_grep
-  , SIMPLIFY = F)
 
-  pressure_units <- gsub("\\s", "", substr(pressure_values, 7, nchar(pressure_values)))
-  pressure_values <- as.numeric(pressure_values)
-
-  # Extract the corresponding timestamps
-  pressure_timestamps <- log_data$timestamp[pressure_logs]
-
-  return(data.frame(datetime = pressure_timestamps, pressure = pressure_values, unit = pressure_units))
-}
-
-get_latest_file <- function(file_ending = "\\.log", file_pattern = "Terminal") {
-  log_files <- list.files(pattern = file_ending)
-  log_files <- grep(pattern = file_pattern, x = log_files, value = T)
-  if (length(log_files) == 0) return(NULL)
-  latest_file <- log_files[which.max(file.info(log_files)$mtime)]
-  return(latest_file)
-}
-
-read_teckso_log_fast_multiple <- function(logfile
-                                          , header = FALSE
-                                          , sep = "\n"
-                                          , col.names = "log_entry"
-                                          , names = c("DNPH", "Waschflaschen")
-                                          , n = 2500) {
-
-  # Skip unnecessary reads
-  total_lines <- lapply(logfile, function( x ) length( readLines(x, warn = F)))
-  total_lines <- lapply(logfile, function( x ) length( readLines(x, warn = F)))
-
-  skip_lines <- lapply(total_lines, function( x ) max(0, x - n))
-
-  # Load the last 2500 lines efficiently
-  log_data <- mapply(function( x,y ) fread(x, header = header, sep = sep, col.names = col.names, skip = y, nrows = n)
-                     , x = logfile
-                     , y = skip_lines
-                     , SIMPLIFY = F)
+  # Assign proper names
   names(log_data) <- names
 
+  # Process timestamps and messages
   log_data <- lapply(log_data, function( x ) x[, timestamp := sub("\\].*", "", log_entry)])
   log_data <- lapply(log_data, function( x ) x[, timestamp := sub("\\[", "", timestamp)])  # Remove `[`
   log_data <- lapply(log_data, function( x ) x[, elapsed_time := sub(".*\\((.*?)\\).*", "\\1", log_entry)])
   log_data <- lapply(log_data, function( x ) x[, message := sub(".*\\): ", "", log_entry)])
 
-  # remove rows ####
-  ii <- seq_along(log_data)
-  for(i in ii)  if(length(grep("OG:D", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("OG:D", log_data[[ i ]]$message) , ]
-  for(i in ii)  if(length(grep("OV:PR", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("OV:PR", log_data[[ i ]]$message) , ]
-  for(i in ii)  if(length(grep("MT:MET_RUN", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("MT:MET_RUN", log_data[[ i ]]$message) , ]
-  for(i in ii)  if(length(grep("OT:Icon", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("OT:Icon", log_data[[ i ]]$message) , ]
-
   # Convert timestamp to POSIXct and format to include milliseconds
   options(digits.secs = 3)
   log_data <- lapply(log_data, function( x ) x[, timestamp := as.POSIXct(timestamp, format = "%Y.%m.%d-%H:%M:%S")])
 
-  # Clean up messages by removing specific tags efficiently
-  log_data <- lapply(log_data, function( x ) x[, message := gsub("\\[TAG\\=TERMINAL\\,PRIO=MSG\\]|\\[OV\\:PR\\]", "", message)])
+  # Remove irrelevant messages
+  log_data <- lapply(log_data, function(df) {
+    patterns <- c("OG:D", "OV:PR", "MT:MET_RUN", "OT:Icon")
+    for (p in patterns) df <- df[!grepl(p, message), ]
+    df
+  })
 
-  # Reduce multiple spaces to a single space
-  log_data <- lapply(log_data, function( x ) x[, message := gsub("\\s{2,}", " ", message)])
+  # ii <- seq_along(log_data)
+  # for(i in ii)  if(length(grep("OG:D", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("OG:D", log_data[[ i ]]$message) , ]
+  # for(i in ii)  if(length(grep("OV:PR", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("OV:PR", log_data[[ i ]]$message) , ]
+  # for(i in ii)  if(length(grep("MT:MET_RUN", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("MT:MET_RUN", log_data[[ i ]]$message) , ]
+  # for(i in ii)  if(length(grep("OT:Icon", log_data[[ i ]]$message)) > 0) log_data[[ i ]] <- log_data[[ i ]][ - grep("OT:Icon", log_data[[ i ]]$message) , ]
+  #
 
-  # Identify non-pressure logs efficiently
-  nopressure_logs <- lapply(log_data, function( x ) x[!grepl("mBar", message)])
-  nopressure_return <- lapply(nopressure_logs, function( x ) x[, .(datetime = timestamp, Status = message)])
+  # Convert timestamp to POSIXct
+  options(digits.secs = 3)
+  log_data <- lapply(log_data, function(df) {
+    df[, timestamp := as.POSIXct(timestamp, format = "%Y.%m.%d-%H:%M:%S")]
+    df
+  })
 
-  # Identify Timeline from logs
-  Timeline <- lapply(nopressure_return, function( x ) last(grep("TL", x$Status, value = T)))
+  # Clean messages
+  log_data <- lapply(log_data, function(df) {
+    df[, message := gsub("\\[TAG\\=TERMINAL\\,PRIO=MSG\\]|\\[OV\\:PR\\]", "", message)]
+    df[, message := gsub("\\s{2,}", " ", message)]
+    df
+  })
 
-  # Identify MPV1 Position
-  MPV1 <- lapply(nopressure_return, function( x ) last(grep("MPVS 1=2", x$Status, value = T)))
-  MPV1 <- lapply(MPV1, function( x ) as.numeric(substr(x, regexpr("GO", x) + 2, nchar(x))))
+  # Extract non-pressure logs
+  nopressure_logs <- lapply(log_data, function(df) df[!grepl("mBar", message)])
+  nopressure_return <- lapply(nopressure_logs, function(df) df[, .(datetime = timestamp, Status = message)])
 
-  # Identify Wert
-  Wert <- lapply(nopressure_return, function( x ) last(grep("Wert=", x$Status, value = T)))
-  Wert <- lapply(Wert, function( x ) as.numeric(substr(x, regexpr("Wert=", x) + 5, nchar(x))))
-  Wert <- lapply(Wert, function( x ) x/100)
+  # Extract latest timeline
+  Timeline <- lapply(nopressure_return, function(df) last(grep("TL", df$Status, value = TRUE)))
 
-  # Process logs for Pressure P1 and P2
-  pressure_logs_P1 <- lapply(log_data, function( x ) process_pressure_logs(pressure_type = "P1", log_data = x))
-  pressure_logs_P2 <- lapply(log_data, function( x ) process_pressure_logs("P2", x))
+  # Extract latest MPV1 Position
+  MPV1 <- lapply(nopressure_return, function(df) last(grep("MPVS 1=2", df$Status, value = TRUE)))
+  MPV1 <- lapply(MPV1, function(val) as.numeric(substr(val, regexpr("GO", val) + 2, nchar(val))))
 
-  # Return the processed data as a list
+  # Extract latest Wert
+  Wert <- lapply(nopressure_return, function(df) last(grep("Wert=", df$Status, value = TRUE)))
+  Wert <- lapply(Wert, function(val) as.numeric(substr(val, regexpr("Wert=", val) + 5, nchar(val))) / 100)
+
+  # Process pressure logs for P1 and P2
+  pressure_logs_P1 <- lapply(log_data, function(df) process_pressure_logs("P1", df))
+  pressure_logs_P2 <- lapply(log_data, function(df) process_pressure_logs("P2", df))
+
+  # Return structured data
   return(list(
     Pressure_P1 = pressure_logs_P1,
     Pressure_P2 = pressure_logs_P2,
@@ -237,3 +109,53 @@ read_teckso_log_fast_multiple <- function(logfile
   ))
 }
 
+#' Process Pressure Logs
+#'
+#' Extracts pressure values and timestamps from log messages based on the specified pressure type (P1 or P2).
+#'
+#' @param pressure_type A string specifying which pressure type to extract (either "P1" or "P2").
+#' @param log_data A data.table containing processed log data.
+#'
+#' @return A data frame containing `datetime`, `pressure`, and `unit` columns.
+#'
+#' @export
+process_pressure_logs <- function(pressure_type, log_data) {
+  pressure_logs <- grep("mBar", log_data$message)
+  pressure_logs <- pressure_logs[grep(pressure_type, log_data$message[pressure_logs])]
+
+  if (length(pressure_logs) == 0) return(data.frame(datetime = NA, pressure = NA, unit = NA))  # Return empty frame if no data
+
+  pressure_grep <- gregexpr("mBar", log_data$message[pressure_logs])
+  blank_grep <- gregexpr(" ", log_data$message[pressure_logs])
+
+  # Extract pressure values
+  pressure_values <- mapply(function(message, blank, pressure) {
+    substr(message, blank[max(which(blank < pressure)) - 1], pressure - 1)
+  }, message = log_data$message[pressure_logs], blank = blank_grep, pressure = pressure_grep, SIMPLIFY = FALSE)
+
+  pressure_units <- gsub("\\s", "", substr(pressure_values, 7, nchar(pressure_values)))
+  pressure_values <- as.numeric(pressure_values)
+
+  # Extract timestamps
+  pressure_timestamps <- log_data$timestamp[pressure_logs]
+
+  return(data.frame(datetime = pressure_timestamps, pressure = pressure_values, unit = pressure_units))
+}
+
+#' Get Latest Log File
+#'
+#' Searches for the latest log file matching a specified pattern.
+#'
+#' @param file_ending A string specifying the file extension to look for (default is `".log"`).
+#' @param file_pattern A regex pattern to filter filenames (default is `"Terminal"`).
+#'
+#' @return A string representing the most recently modified file matching the pattern.
+#'
+#' @export
+get_latest_file <- function(file_ending = "\\.log", file_pattern = "Terminal") {
+  log_files <- list.files(pattern = file_ending)
+  log_files <- grep(pattern = file_pattern, x = log_files, value = TRUE)
+  if (length(log_files) == 0) return(NULL)
+  latest_file <- log_files[which.max(file.info(log_files)$mtime)]
+  return(latest_file)
+}
