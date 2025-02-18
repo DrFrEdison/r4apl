@@ -1,35 +1,28 @@
-#' Read GC Database and Filter Data
+#' Read Instrument Database and Filter Data
 #'
 #' This function reads Gas Chromatography (GC) database files from a specified directory, allows filtering by date and time, and optionally returns a subset of the data.
 #'
 #' @param dir Character vector, the directories where GC database files are stored. Default is `c(wd$GC_MS$data, wd$GC_FID_TCD$data)`.
 #' @param date Character, optional. A manual date (format: "YYYYMMDD") to filter the files. Default is NA.
 #' @param time Character, optional. A manual time (format: "HHMM") to further filter the files by time. Default is NA.
-#' @param order Integer, optional. Specifies the order position of files from newest to oldest. Default is NA.
 #' @param subdate Character, optional. A date (format: "YYYY-MM-DD") to filter the data by the `datetime` field. Default is "2024-07-01".
-#' @param instrument Character, specifies the instrument type to filter directories, either "GC_MS" or "GC_FID_TCD". Default is "GC_MS".
 #'
 #' @return A `data.table` containing the filtered GC data.
 #'
 #' @examples
 #' \dontrun{
 #' # Read GC database and filter by date and time
-#' read_gc_database(date = "20240701", time = "1200")
+#' read_instrument_db(date = "20240701", time = "1200")
 #' }
 #'
 #' @export
-read_gc_database <- function(dir = c(wd$GC_MS$data, wd$GC_FID_TCD$data),
-                                  date = NA,
-                                  time = NA,
-                                  order = NA,
-                                  subdate = "2024-07-01",
-                                  instrument = "GC_MS") {
+read_instrument_db <- function(instrument = "GC-MS",
+                               date = NA,
+                               time = NA,
+                               subdate = "2024-07-01") {
 
-  # Filter directories based on the instrument type
-  dir <- dir[basename(dir) %in% instrument]
-
-  # Ensure the directory exists
-  if (length(dir) == 0) stop("No valid directory found for the instrument type.")
+  instrument <- gsub("\\-", "\\_", instrument)
+  dir <- wd$data$csv[[ which( names(wd$data$csv) %in% instrument ) ]]
 
   # Set working directory to the filtered path
   setwd(dir)
@@ -44,7 +37,7 @@ read_gc_database <- function(dir = c(wd$GC_MS$data, wd$GC_FID_TCD$data),
 
   # Filter files by date if provided
   if (!is.na(date)) {
-    files <- files[substr(files, 1, 8) == date]
+    files <- files[ as.Date(substr(files, 1, 6), format = "%y%m%d") == date]
     if (length(files) == 0) stop("No files found for the specified date.")
     files.order <- files[order(file.info(files[substr(files, 1, 8) == date])$ctime)]
   }
@@ -55,14 +48,8 @@ read_gc_database <- function(dir = c(wd$GC_MS$data, wd$GC_FID_TCD$data),
     if (length(files.order) == 0) stop("No files found for the specified date and time.")
   }
 
-  # Filter by manual order if provided
-  if (!is.na(order)) {
-    files.order <- rev(files.order)[order]
-    if (length(files.order) == 0) stop("No files found for the specified order.")
-  }
-
   # Read the most recent file from the ordered list
-  dat <- fread(files.order[length(files.order)], sep = ";", dec = ",", encoding = "Latin-1", na.strings = "")
+  dat <- fread(files.order[length(files.order)], sep = ";", dec = ",", encoding = "UTF-8", na.strings = "")
 
   # Convert 'datetime' column to POSIXct and order by it
   if ("datetime" %in% colnames(dat)) {
@@ -92,5 +79,11 @@ read_gc_database <- function(dir = c(wd$GC_MS$data, wd$GC_FID_TCD$data),
   factor_cols <- intersect(factor_cols, colnames(dat))
   dat[, (factor_cols) := lapply(.SD, factor), .SDcols = factor_cols]
 
+  dat <- dat[ , -"date"]
+  dat <- dat[ , -"time"]
+  dat <- dat[ , -"detector"]
+  dat <- dat[ , -"basename"]
+  dat <- dat[ nrow(dat) : 1 , ]
+  dat <- dat[ dat$method != "Standby" , ]
   return(dat)
 }

@@ -16,34 +16,34 @@
 #' # Example usage:
 #' gc_switching_peaks(data = my_gc_data, data_x = "time", data_y = "TCD2B")
 #' }
-#' 
+#'
 #' @export
 gc_switching_peaks <- function(data,
-                               data_x = "time",
+                               data_x = "RT",
                                data_y = "TCD2B",
                                window_size = 15,
                                cut_time = 1) {
-  
+
   # Extract time and signal columns from the data
   time_vector <- data[, get(data_x)]
   signal_vector <- data[, get(data_y)]
-  
+
   # Step 1: Identify the index of time points greater than the cut_time
   cut_time_indices <- which(time_vector > cut_time)
-  
+
   # Step 2: Detect negative-to-positive crossings
   # We look for changes in the sign of the signal and ensure the signal is non-zero
   crossings <- which(c(0, diff(sign(signal_vector[cut_time_indices]))) != 0 & abs(signal_vector[cut_time_indices]) > 0)
-  
+
   # If no crossings are found, return NA
   if (length(crossings) == 0) return(NA)
-  
+
   # Step 3: Filter crossings based on the specified window size
   switching_peaks <- crossings[which(diff(crossings) < window_size)]
-  
+
   # Adjust for the fact that we're working on a subset of the data
   switching_peaks <- switching_peaks + min(cut_time_indices)
-  
+
   # Return the rounded mean of the switching peaks
   return(round(mean(switching_peaks), 0))
 }

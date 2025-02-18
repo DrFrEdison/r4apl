@@ -11,9 +11,10 @@
 #' \item{time}{Time values extracted from the data.}
 #' \item{mass}{Mass values extracted and processed from the data.}
 #' \item{mz}{The mass/charge (m/z) ratios from the mass-related columns.}
-#' \item{mz.mtx}{A matrix of mass/charge values.}
-#' \item{mz.log10.p1.mtx}{A matrix of log10-transformed m/z values (log10(m/z + 1)).}
+#' \item{mz.log10}{A matrix of log10-transformed m/z values (log10(m/z + 1)).}
 #' \item{normalized.by.row}{A matrix of normalized m/z values (by row, dividing by the maximum).}
+#' \item{Counts}{Total Ionic Counts.}
+#' \item{Counts50}{Total Ionic Counts for masses >= 50.}
 #'
 #' @examples
 #' \dontrun{
@@ -23,7 +24,7 @@
 #' @export
 transfer_ms <- function(dat
                         , mass.pattern = "m[0-9]"
-                        , time.pattern = "time_MS"){
+                        , time.pattern = "RT"){
 
   mass.col <- grep(mass.pattern, colnames(dat), value = F)
   mass.abs <- grep(mass.pattern, colnames(dat), value = T)
@@ -35,11 +36,15 @@ transfer_ms <- function(dat
 
   returnlist$time <- time.abs
   returnlist$mass <- mass.abs
-  returnlist$mz <- dat[ , mass.col, with = F]
-  returnlist$mz.mtx <- as.matrix(returnlist$mz)
-  returnlist$mz.log10.p1.mtx <- log10(as.matrix(returnlist$mz.mtx)+1)
-  returnlist$normalized.by.row <- t(apply(returnlist$mz.mtx, 1, function(x) x / max(x, na.rm = TRUE)))
-  mz_mtx_norm <- t(apply(returnlist$mz.mtx, 1, function(x) x / max(x, na.rm = TRUE)))
+  returnlist$mz <- as.matrix( dat[ , mass.col, with = F] )
+  # returnlist$mz.log10 <- log10(as.matrix(returnlist$mz)+1)
+  # returnlist$normalized.by.row <- t(apply(returnlist$mz, 1, function(x) x / max(x, na.rm = TRUE)))
+
+  # returnlist$Counts <- apply(returnlist$mz, 1, sum)
+  # returnlist$Counts <- returnlist$Counts / max(returnlist$Counts)
+
+  # returnlist$Counts50 <- apply(returnlist$mz, 1, function( x ) sum(x[ returnlist$mass >= 50] ))
+  # returnlist$Counts50 <- returnlist$Counts50 / max(returnlist$Counts50)
 
   return(returnlist)
 }

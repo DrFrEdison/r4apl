@@ -15,48 +15,84 @@
 #' }
 #'
 #' @export
-read_gc_chromatogram <- function(database = GC_MS$database
-                                      , instrument
-                                      , wd = wd) {
+read_gc_chromatogram <- function(database
+                                 , instrument
+                                 , detector = c("MS", "TCD1A", "TCD2B", "SIM")) {
 
   # Check if 'dir' column exists in the database
   if (!"dir" %in% colnames(database)) stop("The database must contain a 'dir' column.")
 
   # Check if the instrument directory exists in 'wd'
-  if (!instrument %in% names(wd)) stop("Instrument not found in working directories.")
+  instrument <- gsub("\\-", "\\_", instrument)
+  if (!instrument %in% names(wd$data$csv)) stop("Instrument not found in working directories.")
 
   # Define the path where chromatogram data is stored
-  csv.path <- wd[[instrument]]$data
+  csv.path <- wd$data$csv[[ which( names(wd$data$csv) %in% instrument ) ]]
 
   # List all CSV files in the path, searching recursively
-  gc.files <- dir(path = csv.path, pattern = "*.csv$", recursive = TRUE)
+  dirp <- unique(database$dir)
+  gc.files <- list()
+  for(i in seq_along(dirp)){
 
-  # Filter the files based on the provided basenames in the database
-  gc.files <- gc.files[basename(gc.files) %in% database$basename]
+    gc.files[[ i ]] <- dir(file.path(csv.path, dirp[ i ]), pattern = "*.csv$")
+    gc.files[[ i ]] <- file.path(file.path(csv.path, dirp[ i ]), gc.files[[ i ]])
 
-  if (length(gc.files) == 0) stop("No matching GC files found based on the provided database.")
-
-  # Get the unique detector types from the database
-  detector <- unique(database$detector)
-
-  # Initialize an empty list to store files by detector type
-  gc.files.detector <- list()
-
-  # Loop through each detector and find corresponding files
-  for (i in seq_along(detector)) {
-    gc.files.detector[[i]] <- gc.files[grep(paste0("_", detector[i], "_"), basename(gc.files))]
   }
 
-  # Set the names of the list to the detector types
-  names(gc.files.detector) <- detector
+  gc.files <- unlist(gc.files)
 
-  # Read the CSV files for each detector type
-  gc.raw <- lapply(gc.files.detector, function(files) {
-    lapply(files, function(file) fread(file.path(csv.path, file)))
+  # Filter the files based on the provided basenames in the database
+  gc.files.detector <- list()
+  for (i in seq_along(detector)) {
+
+    gc.files.detector[[ i ]] <- gc.files[ which( unlist(lapply(gregexpr( paste0("_", detector[ i ], "_"), basename(gc.files)), function( x ) x[[ 1 ]])) > 0 ) ]
+
+  }
+
+  gc.files <- gc.files.detector
+  gc.files <- unlist(gc.files)
+
+  date.time.pattern <- paste0(gsub("\\-", "", substr(as.Date(database$datetime, tz = "UTC"), 3, 12))
+                              , "_"
+                              , gsub("\\:", "", as.character(strftime(database$datetime, format = "%H:%M:%S", tz = "UTC"))))
+
+  gc.file.to.read <- list()
+  for(i in 1 : nrow(database)){
+    data_file <- gregexpr(database$data_file[ i ], basename(gc.files))
+    date.time.match <- gregexpr(date.time.pattern[ i ], gc.files)
+
+    gc.file.to.read[[ i ]] <- gc.files[ which( unlist( lapply(date.time.match, function( x ) x[[ 1 ]])) > 0 & unlist( lapply(data_file, function( x ) x[[ 1 ]])) > 0) ]
+    gc.file.to.read[[ i ]] <- unique(gc.file.to.read[[ i ]])
+  }
+
+  ## Read the CSV files for each detector type
+  gc.raw <- lapply(gc.file.to.read, function(files) {
+    lapply(files, function(file) fread(file))
   })
 
-  # Name the raw data based on the file basenames
-  for (i in seq_along(gc.raw)) names(gc.raw[[i]]) <- basename(gc.files.detector[[i]])
+  # Function to extract detector type from file path
+  extract_detector <- function(file_path) {
+    # Check for each detector type in the file path (in order of specificity)
+    for (det in rev(gsub("GC-", "", detector))) {
+      if (grepl(det, file_path)) {
+        return(det)
+      }
+    }
+    return(NA) # Return NA if no detector type is found
+  }
 
+  for(i in seq_along(gc.raw)) names(gc.raw[[ i ]]) <- as.character(unlist(sapply(basename(gc.file.to.read[[ i ]]), extract_detector)))
+
+  # Name the raw data based on the file basenames
+  for (i in seq_along(gc.raw)){
+
+    if(!is.na(as.numeric(substr(database$data_file[ i ], 1, 1)))) names(gc.raw)[[i]] <- paste0("x", database$data_file[ i ]) else{
+
+      names(gc.raw)[[i]] <- database$data_file[ i ]
+
+    }
+  }
+
+  gc.raw <- gc.raw[ unlist(lapply(gc.raw, length)) > 0 ]
   return(gc.raw)
 }

@@ -153,7 +153,7 @@ process_pressure_logs <- function(pressure_type, log_data) {
 #' @return A string representing the most recently modified file matching the pattern.
 #'
 #' @export
-get_latest_file <- function(file_ending = "\\.log", file_pattern = "Terminal", n = 1, path = wd$local$MultiTec5) {
+get_latest_file <- function(file_ending = "\\.log", file_pattern = "-Terminal", n = 1, path = wd$local$MultiTec5) {
 
   old.path <- getwd()
   setwd(path)
@@ -162,7 +162,7 @@ get_latest_file <- function(file_ending = "\\.log", file_pattern = "Terminal", n
   log_files <- grep(pattern = file_pattern, x = log_files, value = TRUE)
   if (length(log_files) == 0) return(NULL)
 
-  latest_file <- tail( log_files[ order(file.info(log_files)$mtime, decreasing = T) ], n)
+  latest_file <- head( log_files[ order(file.info(log_files)$mtime, decreasing = T) ], n)
   setwd(old.path)
 
   return(latest_file)
