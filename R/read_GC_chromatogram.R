@@ -67,7 +67,7 @@ read_gc_chromatogram <- function(database
 
   ## Read the CSV files for each detector type
   gc.raw <- lapply(gc.file.to.read, function(files) {
-    lapply(files, function(file) fread(file))
+    lapply(files, function(file) fread(file, sep = ";", dec = ","))
   })
 
   # Function to extract detector type from file path

@@ -1,3 +1,29 @@
+object_size <- function(ob, threshold = 50){
+
+  # ob <- objects()
+  size_Mb <- lapply(ob, function(x) format(object.size(eval(parse(text=x))), units = "Mb", digits = 1L))
+  size_Mb <- unlist(size_Mb)
+  size_Mb <- as.numeric(gsub(" Mb", "", size_Mb))
+
+  size_df <- data.frame(ob, size = size_Mb)
+  size_df <- size_df[ order(size_df$size, decreasing = T) , ]
+
+  if(any(size_df$size >= threshold)) size_df <- size_df[size_df$size >= threshold, ] else{
+    return( paste0("No object >= ", threshold, " Mb"))
+  }
+
+  return(size_df)
+
+}
+
+# Function to check if a column contains only numbers
+is_numeric_column <- function(column) {
+  # Try to convert to numeric
+  converted <- as.numeric(column)
+  # Check if there are any NAs after conversion (excluding actual NAs in the data)
+  !any(is.na(converted) & !is.na(column))
+}
+
 #' Determine Rows and Columns for Plot Layout
 #'
 #' This function calculates the optimal number of rows and columns for a plotting layout based on the total number of plots.

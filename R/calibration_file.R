@@ -16,24 +16,27 @@
 #' }
 #'
 #' @export
-calibration_file <- function(instrument = instrument, 
-                             type = type, 
-                             date = datep, 
-                             path = wd$cal) {
-  
+calibration_file <- function(instrument = instrument,
+                             detector = NA,
+                             type = type,
+                             date = datep,
+                             path = wd$data$calibration) {
+
   # Search for the calibration directory based on the instrument
-  path <- grep(instrument, path, value = TRUE)
-  
+  path <- path[[ grep(instrument, names(path), value = F) ]]
+
+  if(!is.na(detector)) path <- file.path(path , detector)
+
   # Retrieve all .rds files in the directory
   cal.file <- dir(pattern = "\\.rds$", path = path)
-  
+
   # Filter files based on the specified type and date
   cal.file <- grep(type, cal.file, value = TRUE)
   cal.file <- grep(date, cal.file, value = TRUE)
-  
+
   # Check if calibration file was found
   if (length(cal.file) == 0) stop("No calibration file found for the given parameters.")
-  
+
   # Load and return the calibration data
   return(readRDS(file.path(path, cal.file)))
 }
@@ -56,18 +59,18 @@ calibration_file <- function(instrument = instrument,
 #'
 #' @export
 calibration_matrix <- function(cal.file = cal.file) {
-  
+
   # Extract the model data from each calibration file and combine them into a matrix
   cal.model <- do.call(cbind, lapply(cal.file, function(x) x$model))
-  
+
   # Create a matrix of row indices matching the number of models
-  cal.matrix <- matrix(rep(1:nrow(cal.model), ncol(cal.model) / 2), 
-                       nrow = nrow(cal.model), 
+  cal.matrix <- matrix(rep(1:nrow(cal.model), ncol(cal.model) / 2),
+                       nrow = nrow(cal.model),
                        ncol = ncol(cal.model) / 2)
-  
+
   # Assign column names from the list of calibration files
   colnames(cal.matrix) <- names(cal.file)
-  
+
   return(cal.matrix)
 }
 

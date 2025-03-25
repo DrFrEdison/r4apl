@@ -51,18 +51,17 @@ read_instrument_db <- function(instrument = "GC-MS",
   # Read the most recent file from the ordered list
   dat <- fread(files.order[length(files.order)], sep = ";", dec = ",", encoding = "UTF-8", na.strings = "")
 
+  # Filter by 'subdate' if provided
+  if (!is.na(subdate)) {
+    dat <- dat[as.Date(dat$datetime) >= as.Date(subdate), ]
+    if (nrow(dat) == 0) warning("No data found for the specified subdate.")
+  }
   # Convert 'datetime' column to POSIXct and order by it
   if ("datetime" %in% colnames(dat)) {
     dat$datetime <- as.POSIXct(dat$datetime, tz = "UTC")
     dat <- dat[order(dat$datetime), ]
   } else {
     stop("No 'datetime' column found in the data.")
-  }
-
-  # Filter by 'subdate' if provided
-  if (!is.na(subdate)) {
-    dat <- dat[as.Date(dat$datetime) >= as.Date(subdate), ]
-    if (nrow(dat) == 0) warning("No data found for the specified subdate.")
   }
 
   # Convert numeric-like columns to numeric

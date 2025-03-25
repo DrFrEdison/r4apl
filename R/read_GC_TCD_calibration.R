@@ -1,12 +1,12 @@
-read_GC_TCD_calibration <- function(date.pattern, cal.dir, sub = T){
+read_GC_TCD_calibration <- function(version, cal.dir, sub = T, recursive = T){
 
   is.dir <- getwd()
   setwd(cal.dir)
 
-  files <- dir( pattern = "\\.rda$")
-  files <- grep(date.pattern, files, value = T)
+  files <- dir( pattern = "\\.rda$", recursive = recursive)
+  files <- grep(version, files, value = T)
 
-  date <- as.Date( substr(files, 1, 6), format = "%y%m%d")
+  # date <- as.Date( substr(files, 1, 6), format = "%y%m%d")
 
   detector <- substr(files
                      , lapply(gregexpr("_", files), function( x ) x[[1]] + 1)

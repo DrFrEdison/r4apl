@@ -24,8 +24,15 @@ read_ic_chromatogram <- function(ID) {
   txt_found_file <- txt_found_file[length(txt_found_file)]
 
   # If no file is found, return an error
+  if (length(txt_found_file) == 0) {
+    message( paste0("No matching file found for ID ", ID))
+    return(NA)
+
+  }
+
   if (is.na(txt_found_file)) {
-    stop("No matching file found for the provided ID.")
+    message( paste0("No matching file found for ID ", ID))
+    return(NA)
   }
 
   # Read the file
