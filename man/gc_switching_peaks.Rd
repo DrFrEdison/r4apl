@@ -6,7 +6,7 @@
 \usage{
 gc_switching_peaks(
   data,
-  data_x = "time",
+  data_x = "RT",
   data_y = "TCD2B",
   window_size = 15,
   cut_time = 1

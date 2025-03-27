@@ -4,7 +4,7 @@
 \alias{transfer_ms}
 \title{Transfer Mass Spectrometry Data}
 \usage{
-transfer_ms(dat, mass.pattern = "m[0-9]", time.pattern = "time_MS")
+transfer_ms(dat, mass.pattern = "m[0-9]", time.pattern = "RT")
 }
 \arguments{
 \item{dat}{A data frame or data table containing MS data with columns for mass and time.}
@@ -18,9 +18,10 @@ A list containing:
 \item{time}{Time values extracted from the data.}
 \item{mass}{Mass values extracted and processed from the data.}
 \item{mz}{The mass/charge (m/z) ratios from the mass-related columns.}
-\item{mz.mtx}{A matrix of mass/charge values.}
-\item{mz.log10.p1.mtx}{A matrix of log10-transformed m/z values (log10(m/z + 1)).}
+\item{mz.log10}{A matrix of log10-transformed m/z values (log10(m/z + 1)).}
 \item{normalized.by.row}{A matrix of normalized m/z values (by row, dividing by the maximum).}
+\item{Counts}{Total Ionic Counts.}
+\item{Counts50}{Total Ionic Counts for masses >= 50.}
 }
 \description{
 This function processes Mass Spectrometry (MS) data, extracting mass and time values,

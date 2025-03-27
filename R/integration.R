@@ -1,3 +1,9 @@
+#' @title Order Peaks by Retention Time
+#' @description Orders a data.frame of detected peaks by their retention time (RT)
+#' @param peaks Matrix or data.frame with columns: height, max, start, end
+#' @param RT Numeric vector of retention times
+#' @return A data.frame with ordered peaks and calculated RT
+#' @export
 findpeaks_order <- function(peaks, RT){
   peaks <- data.frame(peaks)
   colnames(peaks) <- c("height", "max", "start", "end")
@@ -5,15 +11,18 @@ findpeaks_order <- function(peaks, RT){
   peaks$area <- NA
   peaks <- peaks[ order(peaks$RT) , ]
   rownames(peaks) <- c(1:nrow(peaks))
-
   peaks <- peaks[ , c("RT", "area", "height", "start", "end", "max")]
   return(peaks)
 }
 
+#' @title Trapezoidal Peak Integration
+#' @description Integrates a signal using the trapezoidal rule
+#' @param x Numeric vector for x-axis (e.g. RT)
+#' @param y Numeric vector for y-axis (e.g. intensity)
+#' @return Numeric value representing the area under the curve
+#' @export
 integrate_peaks <- function(x, y) {
-  # Ensure only positive values are integrated (optional)
   y[y < 0] <- 0
-  # Calculate area using trapezoid rule
   n <- length(x)
   area <- 0
   for (i in 1:(n-1)) {
@@ -22,15 +31,31 @@ integrate_peaks <- function(x, y) {
   return(area)
 }
 
-# Teile das Chromatogramm in bis zu 6 Segmente ####
+#' @title Segment-wise Chromatographic Peak Integration
+#' @description Integrates chromatographic data over defined RT segments with baseline correction, optional peak addition and reprocessing.
+#' @param RT Retention time vector
+#' @param Intensity Intensity vector
+#' @param segment Numeric vector defining segment boundaries
+#' @param findpeak Data.frame with parameters per segment
+#' @param reprocess Optional data.frame with peaks to reprocess
+#' @param addpeak Optional data.frame with peaks to manually add
+#' @param removepeak Optional data.frame with peaks to manually remove
+#' @param name Sample name for plot title
+#' @param ID Sample ID for filename
+#' @param png Logical, if TRUE saves plots to PNG
+#' @return Data.frame of integrated peaks
+#' @export
+#' @import baseline
+#' @importFrom utils head
 segment_integration <- function(RT, Intensity,
-                                segment = c(1, 2.5, 8, 14, 21),
+                                segment,
                                 findpeak,
                                 reprocess = NULL,
                                 addpeak = NULL,
                                 removepeak = NULL,
-                                name = NULL,
-                                png = F
+                                name,
+                                ID,
+                                png = T
 
 ) {
 
@@ -40,14 +65,14 @@ segment_integration <- function(RT, Intensity,
 
   windowsFonts(Verdana = windowsFont("Verdana"))
   graphics.off()
-  if(png) png(filename  = file.path(wd$data$integration, paste0(name, ".png")), width = width <- 480 * 4, height = width*.6
+  if(png) png(filename  = file.path(wd$data$integration, paste0(datetime(), "_", ID, "_", name, ".png")), width = width <- 480 * 4, height = width*.6
               , family = r4apl$font)
 
   if(png) par(mar = c(6, 13, 6, 0.25), mfrow = c(parmfrow(length(segment) ))
-      , cex.axis = 2, cex.main = 2)
+              , cex.axis = 2, cex.main = 2)
 
   if(!png) par(mar = c(3, 6, 3, 0.25), mfrow = c(parmfrow(length(segment) ))
-              , cex.axis = 1, cex.main = 1)
+               , cex.axis = 1, cex.main = 1)
 
   options(scipen = 1)
   plot(RT, Intensity, type = "l", xlab = "", ylab = "",
@@ -154,7 +179,7 @@ segment_integration <- function(RT, Intensity,
                                          , y1.corrected[ new.peak$start : new.peak$end ])
 
         if(new.peak$area <= 0){new.peak$area <- integrate_peaks(x1.range[ new.peak$start : new.peak$end ]
-                                         , y1.range[ new.peak$start : new.peak$end ])}
+                                                                , y1.range[ new.peak$start : new.peak$end ])}
 
         x.peak <- append(x.peak, list(x1.range[ new.peak$start : new.peak$end ]))
         y.peak <- append(y.peak, list(y1.corrected[ new.peak$start : new.peak$end ]))
@@ -251,37 +276,39 @@ segment_integration <- function(RT, Intensity,
   return(peaks)
 }
 
-# Funktion 1: Gruppierung im globalen RT-Bereich per RT-Clustering
+#' @title Group Peaks Globally by RT Clustering
+#' @description Clusters peaks globally based on RT similarity using hierarchical clustering
+#' @param integration.results Named list of data.frames with integrated peak info
+#' @param rt_min Lower RT limit
+#' @param rt_max Upper RT limit
+#' @param h Height parameter for clustering (see cutree)
+#' @param prefix Prefix for group name
+#' @return Data.frame with compound_group and median_RT
+#' @export
 group_peaks_global <- function(integration.results, rt_min = 3, rt_max = 11, h = 0.25, prefix = "G1") {
   library(dplyr)
-
-  all_peaks <- bind_rows(integration.results, .id = "sample") %>%
-    filter(RT > rt_min & RT < rt_max)
-
+  all_peaks <- bind_rows(integration.results, .id = "sample") %>% filter(RT > rt_min & RT < rt_max)
   if (nrow(all_peaks) == 0) return(data.frame())
-
   dist_matrix <- dist(all_peaks$RT)
   clust <- hclust(dist_matrix, method = "single")
   groups <- cutree(clust, h = h)
-
   groups <- formatC(groups, width = 2, format = "d", flag = "0")
-
   all_peaks$compound_group <- paste0(prefix, ".", groups)
-
-  # Median RT je Gruppe berechnen und anfügen
-  rt_medians <- all_peaks %>%
-    group_by(compound_group) %>%
-    summarise(median_RT = median(RT), .groups = "drop")
-
+  rt_medians <- all_peaks %>% group_by(compound_group) %>% summarise(median_RT = median(RT), .groups = "drop")
   all_peaks <- left_join(all_peaks, rt_medians, by = "compound_group")
-
   return(all_peaks)
 }
 
-# Funktion 2: Gruppierung im engen RT-Fenster per Elutionsreihenfolge
+#' @title Group Peaks by Elution Order
+#' @description Groups peaks within a narrow RT window based on elution rank per sample
+#' @param integration.results Named list of data.frames with integrated peak info
+#' @param rt_min Lower RT limit
+#' @param rt_max Upper RT limit
+#' @param prefix Prefix for group name
+#' @return Data.frame with compound_group and median_RT
+#' @export
 group_peaks_by_elution <- function(integration.results, rt_min, rt_max, prefix = "F1") {
   library(dplyr)
-
   all_peaks <- bind_rows(integration.results, .id = "sample") %>%
     filter(RT >= rt_min & RT <= rt_max) %>%
     arrange(sample, RT) %>%
@@ -289,78 +316,50 @@ group_peaks_by_elution <- function(integration.results, rt_min, rt_max, prefix =
     mutate(elution_rank = row_number()) %>%
     ungroup() %>%
     mutate(compound_group = paste0(prefix, ".", formatC(elution_rank, width = 2, format = "d", flag = "0")))
-
-  # Median RT je Gruppe berechnen und anfügen
-  rt_medians <- all_peaks %>%
-    group_by(compound_group) %>%
-    summarise(median_RT = median(RT), .groups = "drop")
-
+  rt_medians <- all_peaks %>% group_by(compound_group) %>% summarise(median_RT = median(RT), .groups = "drop")
   all_peaks <- left_join(all_peaks, rt_medians, by = "compound_group")
-
   return(all_peaks)
 }
 
+#' @title Custom Barplot for GC/MS Peak Areas
+#' @description Creates a grouped barplot per compound with color-coded samples
+#' @param summary.df A data.frame with columns: sample, compound_group, Area, median_RT
+#' @param bar_width Width of bars (default 1.5)
+#' @param colfun A vector of colors (e.g. r4apl$col)
+#' @export
 plot_bar_custom <- function(summary.df, bar_width = 1.5, colfun = r4apl$col) {
-  # Gruppierung nach Compound
   compound_levels <- unique(summary.df$compound_group[order(summary.df$median_RT)])
   samples <- unique(summary.df$sample)
-
   n_compounds <- length(compound_levels)
   n_samples <- length(samples)
-
-  # Balkenfarben für jede Probe
   bar_colors <- setNames(colfun[ 1:n_samples], samples)
-
-  # X-Positionen der Balken
   byp <- 2.5
   x_positions <- seq(1, by = byp, length.out = n_compounds)
-
-  # Plot vorbereiten
-
-  png(filename  = file.path(wd$plot$Audi, paste0("Barplot_GC_MS", ".png")), width = width <- 480 * 4, height = width*.6
-      , family = r4apl$font)
-
+  png(filename = file.path(wd$plot$Audi, paste0("Barplot_GC_MS", ".png")), width = 480 * 4, height = 480 * 2.4, family = r4apl$font)
   par(mar = c(15,9,4,1))
   plot(NULL, xlim = c(min(x_positions) - 1, max(x_positions) + 1),
        ylim = c(0, max(summary.df$Area) * 1.2),
        xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "n")
   rect(xleft = par("usr")[1], xright = par("usr")[2], ybottom = 0, ytop = par("usr")[4], xpd = T)
   segments(x_positions - byp / 2, 0, x_positions - byp / 2, - diff(par("usr")[3:4]) * .025, xpd = T)
-  # text(x_positions, 0, xpd = T)
-
   axis(2, las = 2, lwd = 0.5)
   mtext("Compound", 1, 3, font = 2)
   mtext("Area", 2, 4.5, font = 2)
-
-  # Bar Breite und Offset pro Sample
   dx <- bar_width / n_samples
-  offsets <- seq(-bar_width/2, bar_width/2, length.out = n_samples)
-  offsets <- offsets * byp/2
-  # Balken zeichnen
+  offsets <- seq(-bar_width/2, bar_width/2, length.out = n_samples) * byp / 2
   for (i in seq_along(compound_levels)) {
     compound <- compound_levels[i]
     x_center <- x_positions[i]
-
     sub <- summary.df[summary.df$compound_group == compound, ]
-
     for (j in seq_len(nrow(sub))) {
       samp <- sub$sample[j]
       area <- sub$Area[j]
       x_left <- x_center + offsets[which(samples == samp)] - dx / 2
       x_right <- x_left + dx
-
       rect(x_left, 0, x_right, area, col = bar_colors[samp], border = NA)
     }
-
-    # Compound Label
     text(x = x_center, y = -0.015 * max(summary.df$Area), labels = compound, xpd = TRUE, srt = 60, adj = 1, cex = 1.25)
-
   }
-
-  # Legende
   legend("topright", legend = samples, fill = bar_colors, border = NA, bty = "n", cex = 0.8)
   dev.off()
 }
-
-
-

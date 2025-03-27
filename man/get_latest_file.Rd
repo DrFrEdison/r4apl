@@ -4,12 +4,19 @@
 \alias{get_latest_file}
 \title{Get Latest Log File}
 \usage{
-get_latest_file(file_ending = "\\\\.log", file_pattern = "Terminal")
+get_latest_file(
+  file_ending = "\\\\.log",
+  file_pattern = "-Terminal",
+  n = 1,
+  path = wd$local$MultiTec5
+)
 }
 \arguments{
 \item{file_ending}{A string specifying the file extension to look for (default is \code{".log"}).}
 
 \item{file_pattern}{A regex pattern to filter filenames (default is \code{"Terminal"}).}
+
+\item{n}{How many files should be shown(default is \code{1}).}
 }
 \value{
 A string representing the most recently modified file matching the pattern.

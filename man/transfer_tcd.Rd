@@ -4,27 +4,27 @@
 \alias{transfer_tcd}
 \title{Transfer TCD Data}
 \usage{
-transfer_tcd(tcd1A = NA, tcd2B, colnames = c("time", "TCD1A", "TCD2B"))
+transfer_tcd(TCD1A = NA, TCD2B, colnames = c("RT", "TCD1A", "TCD2B"))
 }
 \arguments{
-\item{tcd1A}{A data frame or data table containing TCD1A data with time and signal columns. Default is \code{NA}.}
+\item{TCD1A}{A data frame or data table containing TCD1A data with RT and TCD columns. Default is \code{NA}.}
 
-\item{tcd2B}{A data frame or data table containing TCD2B data with time and signal columns.}
+\item{TCD2B}{A data frame or data table containing TCD2B data with RT and TCD columns.}
 
-\item{colnames}{A character vector specifying the column names for the merged data. Default is \code{c("time", "TCD1A", "TCD2B")}.}
+\item{colnames}{A character vector specifying the column names for the merged data. Default is \code{c("RT", "TCD1A", "TCD2B")}.}
 }
 \value{
-A merged data frame or data table of TCD data containing time, TCD1A, and TCD2B values.
-If \code{tcd1A} is \code{NA}, only \code{tcd2B} is returned.
+A merged data frame or data table of TCD data containing RT, TCD1A, and TCD2B values.
+If \code{TCD1A} is \code{NA}, only \code{TCD2B} is returned.
 }
 \description{
 This function merges Thermal Conductivity Detector (TCD) data from two sources,
-handling cases where one source is \code{NA}, or the time differences between them
+handling cases where one source is \code{NA}, or the RT differences between them
 are minimal or zero. It also supports rolling joins when the number of rows differs.
 }
 \examples{
 \dontrun{
   # Example usage:
-  merged_data <- transfer_tcd(tcd1A, tcd2B, colnames = c("time", "TCD1A", "TCD2B"))
+  merged_data <- transfer_tcd(TCD1A, TCD2B, colnames = c("RT", "TCD1A", "TCD2B"))
 }
 }

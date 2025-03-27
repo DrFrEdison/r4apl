@@ -6,9 +6,10 @@
 \usage{
 calibration_file(
   instrument = instrument,
+  detector = NA,
   type = type,
   date = datep,
-  path = wd$cal
+  path = wd$data$calibration
 )
 }
 \arguments{
