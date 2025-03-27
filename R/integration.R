@@ -38,18 +38,33 @@ segment_integration <- function(RT, Intensity,
   peaks <- list()
   n.seg.plot <- length(segment) - 1
 
+  windowsFonts(Verdana = windowsFont("Verdana"))
   graphics.off()
   if(png) png(filename  = file.path(wd$data$integration, paste0(name, ".png")), width = width <- 480 * 4, height = width*.6
               , family = r4apl$font)
 
-  par(mar = c(3, 4, 2, 0), mfrow = c(parmfrow(length(segment) )))
+  if(png) par(mar = c(6, 13, 6, 0.25), mfrow = c(parmfrow(length(segment) ))
+      , cex.axis = 2, cex.main = 2)
 
-  plot(RT, Intensity, type = "l", xlab = "Retention Time", ylab = "Intensity",
+  if(!png) par(mar = c(3, 6, 3, 0.25), mfrow = c(parmfrow(length(segment) ))
+              , cex.axis = 1, cex.main = 1)
+
+  options(scipen = 1)
+  plot(RT, Intensity, type = "l", xlab = "", ylab = "",
        ylim = c(0, rangexy(Intensity)[2]), axes = FALSE, main = name)
-  axis(2, las = 2); axis(1, lwd.ticks = 3, at = seq(0, round(range(RT)[2], 1), 1)); box()
+  axis(2, las = 2)
   x.segments <- seq(0, round(range(RT)[2], 1), 0.5)
   segments(x0 = x.segments, y0 = par("usr")[3], x1 = x.segments,
            y1 = par("usr")[3] - diff(par("usr")[3:4]) * .02, xpd = TRUE)
+  x.segments <- seq(0, round(range(RT)[2], 1), 1)
+  segments(x0 = x.segments, y0 = par("usr")[3], x1 = x.segments,
+           y1 = par("usr")[3] - diff(par("usr")[3:4]) * .04, xpd = TRUE, lwd = 2)
+  text(x.segments, par("usr")[3] - diff(par("usr")[3:4]) * .08, xpd = T, cex = 2)
+  if(png) mtext("Retention Time", 1, 5, cex = 1.5)
+  if(png) mtext("Intensity", 2, 10, cex = 1.5)
+  box()
+  if(!png) mtext("Retention Time", 1, 1.75, cex = 1)
+  if(!png) mtext("Intensity", 2, 4, cex = 1)
 
   for (seg in seq_along(segment)[-1]) {
     i.seg <- seg - 1
@@ -66,11 +81,13 @@ segment_integration <- function(RT, Intensity,
     }
 
     raw.peaks <- tryCatch({
-      findpeaks(y1.range,
-                minpeakheight = this.para$minpeakheight,
-                minpeakdistance = this.para$minpeakdistance,
-                nups = this.para$nups,
-                ndowns = this.para$ndowns)
+      ppp <- findpeaks(y1.range - min(y1.range),
+                       minpeakheight = this.para$minpeakheight,
+                       minpeakdistance = this.para$minpeakdistance,
+                       nups = this.para$nups,
+                       ndowns = this.para$ndowns)
+      ppp[ , 1] <- ppp[ , 1] + min(y1.range)
+      ppp
     }, error = function(e) {
       warning(paste("Fehler bei findpeaks in Segment", i.seg, ":", e$message))
       return(NULL)
@@ -108,18 +125,54 @@ segment_integration <- function(RT, Intensity,
       y.peak[[j]] <- y1.corrected[idx.start:idx.end]
       y.baseline[[j]] <- baseline.corrected[idx.start:idx.end]
 
-      if (diff(range(y.baseline[[j]] + y.peak[[j]])) < this.para$area.threshold) next
+      peaks[[i.seg]]$height[j] <- y1.corrected[ peaks[[i.seg]]$max[j] ]
+
+      if (diff(range(y.baseline[[j]] + y.peak[[j]])) < this.para$minarea) next
 
       peaks[[i.seg]]$area[j] <- integrate_peaks(x.peak[[j]], y.peak[[j]])
     }
 
-    peaks[[i.seg]] <- subset(peaks[[i.seg]], !is.na(area) & area > this.para$area.threshold)
+    peaks[[i.seg]] <- subset(peaks[[i.seg]], !is.na(area) & area > this.para$minarea & height > this.para$minpeakheight)
 
-    # Reprocessing anwenden
+    # Neue Peaks hinzufügen ####
+    if (!is.null(addpeak) && nrow(addpeak) > 0 && any(addpeak$RT > min(x1.range) & addpeak$RT < max(x1.range))) {
+      for (p in seq_len(nrow(addpeak))) {
+        if (!(addpeak$RT[p] > min(x1.range) & addpeak$RT[p] < max(x1.range))) next
+
+        new.peak <- data.frame(RT = NA, area = NA, height = NA, start = NA, end = NA, max = NA)
+
+        new.peak$RT <- addpeak$RT[ p ]
+        new.peak$start <- which.min( abs(x1.range - new.peak$RT) ) + addpeak$left[ p ]
+        new.peak$end <- which.min( abs(x1.range - new.peak$RT) ) + addpeak$right[ p ]
+
+        new.peak$max <- new.peak$start + which.max( y1.range[ new.peak$start : new.peak$end ] )
+
+        new.peak$RT <- x1.range[ new.peak$max ]
+
+        new.peak$height <- max( y1.corrected[ new.peak$start : new.peak$end ] )
+        new.peak$area <- integrate_peaks(x1.range[ new.peak$start : new.peak$end ]
+                                         , y1.corrected[ new.peak$start : new.peak$end ])
+
+        if(new.peak$area <= 0){new.peak$area <- integrate_peaks(x1.range[ new.peak$start : new.peak$end ]
+                                         , y1.range[ new.peak$start : new.peak$end ])}
+
+        x.peak <- append(x.peak, list(x1.range[ new.peak$start : new.peak$end ]))
+        y.peak <- append(y.peak, list(y1.corrected[ new.peak$start : new.peak$end ]))
+        y.baseline <- append(y.baseline, list(baseline.corrected[ new.peak$start : new.peak$end ]))
+
+        peaks[[i.seg]] <- rbind(peaks[[i.seg]], new.peak)
+        rownames(peaks[[i.seg]])[nrow(peaks[[i.seg]])] <- as.character(length(x.peak))
+        peaks[[i.seg]] <- peaks[[i.seg]][order(peaks[[i.seg]]$RT), ]
+      }
+    }
+
+    # Reprocessing ####
     if (!is.null(reprocess) && nrow(reprocess) > 0 && any(reprocess$RT > min(x1.range) & reprocess$RT < max(x1.range))) {
       for (p in seq_len(nrow(reprocess))) {
         if (!(reprocess$RT[p] > min(x1.range) & reprocess$RT[p] < max(x1.range))) next
         peak.idx <- which(abs(peaks[[i.seg]]$RT - reprocess$RT[p]) < 0.3)
+        peak.idx <- peak.idx[ which.min(abs(peaks[[i.seg]]$RT[ peak.idx ] - reprocess$RT[p])) ]
+
         if (length(peak.idx) == 0) next
 
         j <- peak.idx[1]
@@ -134,66 +187,6 @@ segment_integration <- function(RT, Intensity,
         y.peak[[o]] <- y1.corrected[idx.start:idx.end]
         y.baseline[[o]] <- baseline.corrected[idx.start:idx.end]
         peaks[[i.seg]]$area[j] <- integrate_peaks(x.peak[[o]], y.peak[[o]])
-      }
-    }
-
-    # Neue Peaks hinzufügen
-    if (!is.null(addpeak) && nrow(addpeak) > 0 && any(addpeak$RT > min(x1.range) & addpeak$RT < max(x1.range))) {
-      for (p in seq_len(nrow(addpeak))) {
-        if (!(addpeak$RT[p] > min(x1.range) & addpeak$RT[p] < max(x1.range))) next
-
-        idx.center <- min(which(x1.range > addpeak$RT[p]))
-        x.whichp <- (idx.center + addpeak$left[p]):(idx.center + addpeak$right[p])
-
-        if (any(x.whichp < 1 | x.whichp > length(x1.range))) next
-
-        x.add <- x1.range[x.whichp]
-        y.add <- y1.range[x.whichp]
-        y.add.corrected <- y1.corrected[x.whichp]
-        base.add <- baseline.corrected[x.whichp]
-
-        new.peak.raw <- tryCatch({
-          findpeaks(y.add,
-                    minpeakheight = this.para$minpeakheight,
-                    minpeakdistance = this.para$minpeakdistance,
-                    nups = this.para$nups,
-                    ndowns = this.para$ndowns
-                    , npeaks = 1)
-        }, error = function(e) {
-          warning(paste("Fehler bei findpeaks (addpeak) in Segment", i.seg, ":", e$message))
-          return(NULL)
-        })
-
-        if (is.null(new.peak.raw) || nrow(new.peak.raw) == 0) next
-
-        new.peak <- tryCatch({
-          findpeaks_order(new.peak.raw, RT = x.add)
-        }, error = function(e) {
-          warning(paste("Fehler bei findpeaks_order (addpeak) in Segment", i.seg, ":", e$message))
-          return(data.frame())
-        })
-
-        if (nrow(new.peak) == 0) next
-
-        idxs <- new.peak$start:new.peak$end
-        x.add <- x.add[idxs]
-        y.add <- y.add[idxs]
-        y.add.corrected <- y.add.corrected[idxs]
-        base.add <- base.add[idxs]
-
-        new.peak$area <- integrate_peaks(x.add, y.add.corrected)
-        offset <- min(x.whichp)
-        new.peak$start <- new.peak$start + offset
-        new.peak$end <- new.peak$end + offset
-        new.peak$max <- new.peak$max + offset
-
-        x.peak <- append(x.peak, list(x.add))
-        y.peak <- append(y.peak, list(y.add.corrected))
-        y.baseline <- append(y.baseline, list(base.add))
-
-        peaks[[i.seg]] <- rbind(peaks[[i.seg]], new.peak)
-        rownames(peaks[[i.seg]])[nrow(peaks[[i.seg]])] <- as.character(length(x.peak))
-        peaks[[i.seg]] <- peaks[[i.seg]][order(peaks[[i.seg]]$RT), ]
       }
     }
 
@@ -218,19 +211,29 @@ segment_integration <- function(RT, Intensity,
     }
 
     # Plot mit Baseline
-    plot(x1.range, y1.range, type = "l", xlab = "Retention Time", ylab = "Intensity",
-         ylim = c(0, rangexy(y1.range)[2]), axes = FALSE)
+    plot(x1.range, y1.range, type = "l", xlab = "", ylab = "",
+         ylim = c(0, rangexy(y1.range)[2]), axes = FALSE, main = paste0("Segment ", i.seg))
     lines(x1.range, baseline.corrected, col = "blue", lwd = 1)
-    points(peaks[[i.seg]]$RT, peaks[[i.seg]]$height, pch = 20, col = "red", cex = 2.5)
-    axis(2, las = 2); axis(1, lwd.ticks = 2); box()
+    points(peaks[[i.seg]]$RT, peaks[[i.seg]]$height + baseline.corrected[ peaks[[i.seg]]$max ], pch = 20, col = "red", cex = 2.5)
+    axis(2, las = 2)
+
+    mtext("Retention Time", 1, 5, cex = 1.5)
+    mtext("Intensity", 2, 10, cex = 1.5)
 
     # Markierungen
     x.segments <- seq(round(range(x1.range)[1], 1), round(range(x1.range)[2], 1), 0.1)
     segments(x0 = x.segments, y0 = par("usr")[3], x1 = x.segments,
-             y1 = par("usr")[3] - diff(par("usr")[3:4]) * .01, xpd = TRUE)
+             y1 = par("usr")[3] - diff(par("usr")[3:4]) * .02, xpd = TRUE)
     x.segments <- seq(round(range(x1.range)[1], 1), round(range(x1.range)[2], 1), 0.5)
     segments(x0 = x.segments, y0 = par("usr")[3], x1 = x.segments,
-             y1 = par("usr")[3] - diff(par("usr")[3:4]) * .02, xpd = TRUE, lwd = 2)
+             y1 = par("usr")[3] - diff(par("usr")[3:4]) * .04, xpd = TRUE, lwd = 2)
+    text(x.segments, par("usr")[3] - diff(par("usr")[3:4]) * .08, x.segments, xpd = T, cex = 2)
+    x.segments <- seq(round(range(x1.range)[1], 1), round(range(x1.range)[2], 1), 1)
+    segments(x0 = x.segments, y0 = par("usr")[3], x1 = x.segments,
+             y1 = par("usr")[3] - diff(par("usr")[3:4]) * .04, xpd = TRUE, lwd = 2)
+    box()
+
+
 
     for (o in as.numeric(rownames(peaks[[i.seg]]))) {
       polygon(c(x.peak[[o]], rev(x.peak[[o]])),
@@ -243,7 +246,121 @@ segment_integration <- function(RT, Intensity,
   if(png) dev.off()
   # Ergebnis zusammenfassen
   peaks <- do.call(rbind, peaks)
-  peaks <- peaks[order(peaks$RT), ]
+  if(nrow(peaks) > 0)peaks <- peaks[order(peaks$RT), ]
   rownames(peaks) <- seq_len(nrow(peaks))
   return(peaks)
 }
+
+# Funktion 1: Gruppierung im globalen RT-Bereich per RT-Clustering
+group_peaks_global <- function(integration.results, rt_min = 3, rt_max = 11, h = 0.25, prefix = "G1") {
+  library(dplyr)
+
+  all_peaks <- bind_rows(integration.results, .id = "sample") %>%
+    filter(RT > rt_min & RT < rt_max)
+
+  if (nrow(all_peaks) == 0) return(data.frame())
+
+  dist_matrix <- dist(all_peaks$RT)
+  clust <- hclust(dist_matrix, method = "single")
+  groups <- cutree(clust, h = h)
+
+  groups <- formatC(groups, width = 2, format = "d", flag = "0")
+
+  all_peaks$compound_group <- paste0(prefix, ".", groups)
+
+  # Median RT je Gruppe berechnen und anfügen
+  rt_medians <- all_peaks %>%
+    group_by(compound_group) %>%
+    summarise(median_RT = median(RT), .groups = "drop")
+
+  all_peaks <- left_join(all_peaks, rt_medians, by = "compound_group")
+
+  return(all_peaks)
+}
+
+# Funktion 2: Gruppierung im engen RT-Fenster per Elutionsreihenfolge
+group_peaks_by_elution <- function(integration.results, rt_min, rt_max, prefix = "F1") {
+  library(dplyr)
+
+  all_peaks <- bind_rows(integration.results, .id = "sample") %>%
+    filter(RT >= rt_min & RT <= rt_max) %>%
+    arrange(sample, RT) %>%
+    group_by(sample) %>%
+    mutate(elution_rank = row_number()) %>%
+    ungroup() %>%
+    mutate(compound_group = paste0(prefix, ".", formatC(elution_rank, width = 2, format = "d", flag = "0")))
+
+  # Median RT je Gruppe berechnen und anfügen
+  rt_medians <- all_peaks %>%
+    group_by(compound_group) %>%
+    summarise(median_RT = median(RT), .groups = "drop")
+
+  all_peaks <- left_join(all_peaks, rt_medians, by = "compound_group")
+
+  return(all_peaks)
+}
+
+plot_bar_custom <- function(summary.df, bar_width = 1.5, colfun = r4apl$col) {
+  # Gruppierung nach Compound
+  compound_levels <- unique(summary.df$compound_group[order(summary.df$median_RT)])
+  samples <- unique(summary.df$sample)
+
+  n_compounds <- length(compound_levels)
+  n_samples <- length(samples)
+
+  # Balkenfarben für jede Probe
+  bar_colors <- setNames(colfun[ 1:n_samples], samples)
+
+  # X-Positionen der Balken
+  byp <- 2.5
+  x_positions <- seq(1, by = byp, length.out = n_compounds)
+
+  # Plot vorbereiten
+
+  png(filename  = file.path(wd$plot$Audi, paste0("Barplot_GC_MS", ".png")), width = width <- 480 * 4, height = width*.6
+      , family = r4apl$font)
+
+  par(mar = c(15,9,4,1))
+  plot(NULL, xlim = c(min(x_positions) - 1, max(x_positions) + 1),
+       ylim = c(0, max(summary.df$Area) * 1.2),
+       xaxt = "n", yaxt = "n", xlab = "", ylab = "", bty = "n")
+  rect(xleft = par("usr")[1], xright = par("usr")[2], ybottom = 0, ytop = par("usr")[4], xpd = T)
+  segments(x_positions - byp / 2, 0, x_positions - byp / 2, - diff(par("usr")[3:4]) * .025, xpd = T)
+  # text(x_positions, 0, xpd = T)
+
+  axis(2, las = 2, lwd = 0.5)
+  mtext("Compound", 1, 3, font = 2)
+  mtext("Area", 2, 4.5, font = 2)
+
+  # Bar Breite und Offset pro Sample
+  dx <- bar_width / n_samples
+  offsets <- seq(-bar_width/2, bar_width/2, length.out = n_samples)
+  offsets <- offsets * byp/2
+  # Balken zeichnen
+  for (i in seq_along(compound_levels)) {
+    compound <- compound_levels[i]
+    x_center <- x_positions[i]
+
+    sub <- summary.df[summary.df$compound_group == compound, ]
+
+    for (j in seq_len(nrow(sub))) {
+      samp <- sub$sample[j]
+      area <- sub$Area[j]
+      x_left <- x_center + offsets[which(samples == samp)] - dx / 2
+      x_right <- x_left + dx
+
+      rect(x_left, 0, x_right, area, col = bar_colors[samp], border = NA)
+    }
+
+    # Compound Label
+    text(x = x_center, y = -0.015 * max(summary.df$Area), labels = compound, xpd = TRUE, srt = 60, adj = 1, cex = 1.25)
+
+  }
+
+  # Legende
+  legend("topright", legend = samples, fill = bar_colors, border = NA, bty = "n", cex = 0.8)
+  dev.off()
+}
+
+
+
