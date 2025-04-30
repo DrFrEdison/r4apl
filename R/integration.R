@@ -5,6 +5,7 @@
 #' @return A data.frame with ordered peaks and calculated RT
 #' @export
 findpeaks_order <- function(peaks, RT){
+  if(is.null(peaks)) return(NA_real_)
   peaks <- data.frame(peaks)
   colnames(peaks) <- c("height", "max", "start", "end")
   peaks$RT <- RT[ peaks$max ]

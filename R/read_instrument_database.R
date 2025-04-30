@@ -19,7 +19,8 @@
 read_instrument_db <- function(instrument = "GC-MS",
                                date = NA,
                                time = NA,
-                               subdate = "2024-07-01") {
+                               subdate = "2024-07-01"
+                               , pattern = "qxx-db") {
 
   instrument <- gsub("\\-", "\\_", instrument)
   dir <- wd$data$csv[[ which( names(wd$data$csv) %in% instrument ) ]]
@@ -28,7 +29,7 @@ read_instrument_db <- function(instrument = "GC-MS",
   setwd(dir)
 
   # Retrieve the list of GC database files
-  files <- dir(pattern = "*database.csv$")
+  files <- dir(pattern = pattern)
   if (length(files) == 0) stop("No GC database files found in the specified directory.")
 
   # Order files based on their creation time

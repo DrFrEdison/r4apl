@@ -18,16 +18,17 @@
 #'
 #' @export
 read_ic_database <- function(dir = wd$hw$Datensicherung$IC$root,
-                                  date = NA,
-                                  order = NA,
-                                  subdat = TRUE,
-                                  subdate = "2024-07-01") {
+                             date = NA,
+                             order = NA,
+                             subdat = TRUE,
+                             subdate = "2024-07-01",
+                             clean = T) {
 
   # Set working directory to IC csv database folder
   setwd(file.path(dir, "csv_Datenbank"))
 
   # Retrieve the list of IC database files
-  files <- dir(pattern = "*ic_database.csv$")
+  files <- dir(pattern = "qxx-db-00003")
   files.ctime <- file.info(files)$ctime
   files.order <- files[order(file.info(files)$ctime)]
 
@@ -46,13 +47,13 @@ read_ic_database <- function(dir = wd$hw$Datensicherung$IC$root,
 
   # Convert 'Bestimmungsstart' column to POSIXct and order by it
   dat$Bestimmungsstart <- as.POSIXct(dat$Bestimmungsstart, tz = "UTC")
-  dat <- dat[order(dat$Bestimmungsstart), ]
+  dat <- dat[order(dat$Bestimmungsstart, dat$Nachbearbeitungsdatum, decreasing = T), ]
 
   # Clean up column names by removing unnecessary prefixes
-  colnames(dat) <- gsub("Anionen\\.|AHWP\\.", "", colnames(dat))
+  if(clean) colnames(dat) <- gsub("Anionen\\.|AHWP\\.", "", colnames(dat))
 
   # Subset the data if 'subdat' is TRUE
-  if (subdat) {
+  if(clean) if (subdat) {
     subcol <- c("Bestimmungsstart", "Ident", "Probentyp", "Methodenname", "Verdünnung",
                 "Bestimmungs-ID", "Bestimmungsdauer [min]", grep("Info", colnames(dat), value = TRUE)[1],
                 grep("Konzentration", colnames(dat), value = TRUE), grep("Kalibrierpunkte", colnames(dat), value = TRUE))
@@ -77,12 +78,12 @@ read_ic_database <- function(dir = wd$hw$Datensicherung$IC$root,
   dat[, (numeric_columns) := lapply(.SD, as.numeric), .SDcols = numeric_columns]
 
   # Remove columns that are empty or contain only NA
-  non_empty_cols <- sapply(dat, function(col) !all(is.na(col) | as.character(col) == ""))
-  dat <- dat[, names(non_empty_cols), with = FALSE]
+  if(clean) non_empty_cols <- sapply(dat, function(col) !all(is.na(col) | as.character(col) == ""))
+  if(clean) dat <- dat[, names(non_empty_cols), with = FALSE]
 
   # Convert certain columns to factors
-  if ("Probentyp" %in% colnames(dat)) dat$Probentyp <- factor(dat$Probentyp)
-  if ("Methodenname" %in% colnames(dat)) dat$Methodenname <- factor(dat$Methodenname)
+  if(clean) if ("Probentyp" %in% colnames(dat)) dat$Probentyp <- factor(dat$Probentyp)
+  if(clean) if ("Methodenname" %in% colnames(dat)) dat$Methodenname <- factor(dat$Methodenname)
 
   return(dat)
 }

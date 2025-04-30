@@ -57,7 +57,11 @@ interflex_Clipboard <- function(dat.cb = readClipboard()) {
     dat.trs <- append(dat.trs, " ", after = i)
   }
 
-  Feiertag <- c("Tag der Einheit\t", "Allerheiligen\t", "Neujahr\t", "1.Weihnachtstag\t", "2.Weihnachtstag\t")
+  Feiertag <- c("Tag der Einheit\t", "Allerheiligen\t"
+                , "Neujahr\t", "1.Weihnachtstag\t", "2.Weihnachtstag\t"
+                , "Karfreitag\t", "Ostersonntag\t", "Ostermontag\t"
+                , "Tag der Arbeit\t", "Chr.Himmelfahrt\t"
+                , "Pfingstsonntag\t", "Pfingstmontag\t", "Fronleichnam\t")
 
   for(i in seq_along(Feiertag)){
 

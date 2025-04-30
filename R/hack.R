@@ -15,27 +15,54 @@
 #' }
 #'
 #' @export
-hack <- function(start_time, ist_time = Sys.time(), pause_time = NA, Zeitkonto = NA) {
+hack <- function(start_time
+                 , ist_time = Sys.time()
+                 , pause_time = NA
+                 , Zeitkonto = NA) {
 
   # Convert times to POSIXct format for calculations
   start_time_obj <- as.POSIXct(start_time, format = "%H:%M")
   ist_time_obj <- as.POSIXct(ist_time, format = "%H:%M")
 
+  #
+  pause.8 <- 60 * 30
+  pause.9 <- 60 * 15
+  working.8 <- 60 * 60 * 8
+  working.9 <- 60 * 60 * 9
+
   # Determine the end time based on pause time (default 30 minutes break if NA or <= 30)
   if (is.na(pause_time) || pause_time <= 30) {
-    end_time.8_obj <- start_time_obj + 60 * 60 * 8 + 60 * 30  # 8 hours + 30 mins pause
-    end_time.9_obj <- start_time_obj + 60 * 60 * 9 + 60 * 15  # 9 hours + 15 mins pause
-  } else if (pause_time > 30) {
-    end_time.8_obj <- start_time_obj + 60 * 60 * 8 + 60 * pause_time
-    end_time.9_obj <- start_time_obj + 60 * 60 * 9 + 60 * pause_time
+
+    end_time.8_obj <- start_time_obj + working.8 + pause.8  # 8 hours + 30 mins pause
+    end_time.9_obj <- start_time_obj + working.9 + pause.8 + pause.9  # 9 hours + 15 mins pause
+
+  } else if (pause_time > 30 & pause_time <= 45) {
+
+    end_time.8_obj <- start_time_obj + working.8 + 60 * pause_time
+    end_time.9_obj <- start_time_obj + working.9 + pause.8 + pause.9
+
+  } else if (pause_time > 45) {
+
+    end_time.8_obj <- start_time_obj + working.8 + 60 * pause_time
+    end_time.9_obj <- start_time_obj + working.9 + 60 * pause_time
+
   }
 
+  warn.time <- start_time_obj + working.9 + pause.8 + pause.9 + 0.72 * 60 * 60
+  max.time <- start_time_obj + working.9 + pause.8 + pause.9 + 1 * 60 * 60
+
   # Calculate working time in hours, subtracting pause time
-  working_time <- as.numeric(difftime(ist_time_obj, start_time_obj, units = "hours")) - ifelse(is.na(pause_time), 0, pause_time / 60)
+  working_time <- as.numeric(difftime(ist_time_obj, start_time_obj, units = "hours"))
+
+  if(working_time > 9) working_time <- working_time - .25
+  if(working_time > 6) working_time <- working_time - .5
+  if(is.na(pause_time) || pause_time > 30) working_time - pause_time / 60 - .5
 
   # Calculate remaining time for an 8-hour and 9-hour workday
   remaining_time.8 <- as.numeric(difftime(end_time.8_obj, ist_time_obj, units = "hours"))
   remaining_time.9 <- as.numeric(difftime(end_time.9_obj, ist_time_obj, units = "hours"))
+  remaining_time.10.alarm <- as.numeric(difftime(warn.time, ist_time_obj, units = "hours"))
+  remaining_time.10 <- as.numeric(difftime(max.time, ist_time_obj, units = "hours"))
 
   # Convert working time and remaining time to minutes if less than 2 hours
   working_time_unit <- if (working_time <= 2) "min" else "h"
@@ -76,6 +103,12 @@ hack <- function(start_time, ist_time = Sys.time(), pause_time = NA, Zeitkonto =
     rownames(hack.heimkomm)[nrow(hack.heimkomm)] <- "Zeitkonto"
   }
 
+  hack.heimkomm <- rbind(hack.heimkomm
+                         , c(substr(warn.time, 12, 16), "Uhr")
+                         , c(substr(max.time, 12, 16), "Uhr"))
+  rownames(hack.heimkomm)[ nrow( hack.heimkomm ) - 1] <- "Warnung"
+  rownames(hack.heimkomm)[ nrow( hack.heimkomm )] <- "10 h"
+
   return(hack.heimkomm)
 }
 
@@ -95,8 +128,8 @@ Zeitkto <- function(Zeitkonto) {
 
     if(unlist(gregexpr("\\.", Zeitkonto)) > 0){
 
-    hours <- as.numeric(substr(Zeitkonto, 1, unlist(gregexpr("\\.", Zeitkonto)) - 1))
-    minutes <- round(as.numeric(paste0("0.", substr(Zeitkonto, unlist(gregexpr("\\.", Zeitkonto)) + 1, nchar(Zeitkonto)))) * 60, 0)
+      hours <- as.numeric(substr(Zeitkonto, 1, unlist(gregexpr("\\.", Zeitkonto)) - 1))
+      minutes <- round(as.numeric(paste0("0.", substr(Zeitkonto, unlist(gregexpr("\\.", Zeitkonto)) + 1, nchar(Zeitkonto)))) * 60, 0)
 
     } else {
 
