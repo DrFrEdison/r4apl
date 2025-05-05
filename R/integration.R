@@ -98,6 +98,9 @@ segment_integration <- function(RT, Intensity,
     x1.range <- RT[xrange]
     y1.range <- Intensity[xrange]
 
+    # addpeak within x1.range?
+    addpeaklogic <- !is.null(addpeak) && nrow(addpeak) > 0 && any(addpeak$RT > min(x1.range) & addpeak$RT < max(x1.range))
+
     this.para <- findpeak[findpeak$seg == i.seg, ]
     if (nrow(this.para) == 0) this.para <- findpeak[1, ]
 
@@ -119,7 +122,7 @@ segment_integration <- function(RT, Intensity,
       return(NULL)
     })
 
-    if (is.null(raw.peaks) || nrow(raw.peaks) == 0) {
+    if(!addpeaklogic) if (is.null(raw.peaks) || nrow(raw.peaks) == 0) {
       peaks[[i.seg]] <- data.frame()
       next
     }
@@ -143,22 +146,25 @@ segment_integration <- function(RT, Intensity,
 
     x.peak <- list(); y.peak <- list(); y.baseline <- list()
 
-    for (j in seq_len(nrow(peaks[[i.seg]]))) {
-      idx.start <- peaks[[i.seg]]$start[j]
-      idx.end <- peaks[[i.seg]]$end[j]
-      if (idx.end > length(x1.range)) next
-      x.peak[[j]] <- x1.range[idx.start:idx.end]
-      y.peak[[j]] <- y1.corrected[idx.start:idx.end]
-      y.baseline[[j]] <- baseline.corrected[idx.start:idx.end]
+    if(!is.null(nrow(peaks[[i.seg]]))){
 
-      peaks[[i.seg]]$height[j] <- y1.corrected[ peaks[[i.seg]]$max[j] ]
+      for (j in seq_len(nrow(peaks[[i.seg]]))) {
+        idx.start <- peaks[[i.seg]]$start[j]
+        idx.end <- peaks[[i.seg]]$end[j]
+        if (idx.end > length(x1.range)) next
+        x.peak[[j]] <- x1.range[idx.start:idx.end]
+        y.peak[[j]] <- y1.corrected[idx.start:idx.end]
+        y.baseline[[j]] <- baseline.corrected[idx.start:idx.end]
 
-      if (diff(range(y.baseline[[j]] + y.peak[[j]])) < this.para$minarea) next
+        peaks[[i.seg]]$height[j] <- y1.corrected[ peaks[[i.seg]]$max[j] ]
 
-      peaks[[i.seg]]$area[j] <- integrate_peaks(x.peak[[j]], y.peak[[j]])
+        if (diff(range(y.baseline[[j]] + y.peak[[j]])) < this.para$minarea) next
+
+        peaks[[i.seg]]$area[j] <- integrate_peaks(x.peak[[j]], y.peak[[j]])
+      }
+
+      peaks[[i.seg]] <- subset(peaks[[i.seg]], !is.na(area) & area > this.para$minarea & height > this.para$minpeakheight)
     }
-
-    peaks[[i.seg]] <- subset(peaks[[i.seg]], !is.na(area) & area > this.para$minarea & height > this.para$minpeakheight)
 
     # Neue Peaks hinzufügen ####
     if (!is.null(addpeak) && nrow(addpeak) > 0 && any(addpeak$RT > min(x1.range) & addpeak$RT < max(x1.range))) {
@@ -171,13 +177,19 @@ segment_integration <- function(RT, Intensity,
         new.peak$start <- which.min( abs(x1.range - new.peak$RT) ) + addpeak$left[ p ]
         new.peak$end <- which.min( abs(x1.range - new.peak$RT) ) + addpeak$right[ p ]
 
-        new.peak$max <- new.peak$start + which.max( y1.range[ new.peak$start : new.peak$end ] )
+        if(addpeak$type[ p ] != "negative") new.peak$max <- new.peak$start + which.max( y1.range[ new.peak$start : new.peak$end ] )
+        if(addpeak$type[ p ] == "negative") new.peak$max <- new.peak$start + which.min( y1.range[ new.peak$start : new.peak$end ] )
 
         new.peak$RT <- x1.range[ new.peak$max ]
 
-        new.peak$height <- max( y1.corrected[ new.peak$start : new.peak$end ] )
-        new.peak$area <- integrate_peaks(x1.range[ new.peak$start : new.peak$end ]
-                                         , y1.corrected[ new.peak$start : new.peak$end ])
+        if(addpeak$type[ p ] != "negative") new.peak$height <- max( y1.corrected[ new.peak$start : new.peak$end ] )
+        if(addpeak$type[ p ] == "negative")  new.peak$height <- max( y1.corrected[ new.peak$start : new.peak$end ] * -1 )
+
+        if(addpeak$type[ p ] != "negative") new.peak$area <- integrate_peaks(x1.range[ new.peak$start : new.peak$end ]
+                                                                        , y1.corrected[ new.peak$start : new.peak$end ])
+        if(addpeak$type[ p ] == "negative") new.peak$area <- integrate_peaks(x1.range[ new.peak$start : new.peak$end ]
+                                                                        , y1.corrected[ new.peak$start : new.peak$end ] * -1)
+
 
         if(new.peak$area <= 0){new.peak$area <- integrate_peaks(x1.range[ new.peak$start : new.peak$end ]
                                                                 , y1.range[ new.peak$start : new.peak$end ])}
@@ -186,7 +198,9 @@ segment_integration <- function(RT, Intensity,
         y.peak <- append(y.peak, list(y1.corrected[ new.peak$start : new.peak$end ]))
         y.baseline <- append(y.baseline, list(baseline.corrected[ new.peak$start : new.peak$end ]))
 
-        peaks[[i.seg]] <- rbind(peaks[[i.seg]], new.peak)
+        if(!is.null(nrow(peaks[[i.seg]]))) peaks[[i.seg]] <- rbind(peaks[[i.seg]], new.peak) else{
+          peaks[[i.seg]] <- new.peak
+        }
         rownames(peaks[[i.seg]])[nrow(peaks[[i.seg]])] <- as.character(length(x.peak))
         peaks[[i.seg]] <- peaks[[i.seg]][order(peaks[[i.seg]]$RT), ]
       }
