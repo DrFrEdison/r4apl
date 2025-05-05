@@ -1,7 +1,7 @@
 Package: r4apl
 Type: Package
 Title: A Package for Analysis and Processing Data for APL with Focus on GC-MS/TCD/FID, IC & HPLC
-Version: 0.1.3
+Version: 0.2.0
 Authors@R: 
     person("Markus", "Kurtz", email = "markus.kurtz@apl-landau.de", role = c("aut", "cre"))
 Description: The 'r4apl' package provides a suite of tools for processing data from various analytical techniques, 
