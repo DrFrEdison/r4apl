@@ -9,7 +9,8 @@ read_ic_database(
   date = NA,
   order = NA,
   subdat = TRUE,
-  subdate = "2024-07-01"
+  subdate = "2024-07-01",
+  clean = T
 )
 }
 \arguments{

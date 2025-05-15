@@ -1,3 +1,24 @@
+last_qxx <- function(path, pattern, path.return = T){
+
+  if(unlist(gregexpr("qxx", pattern))[ 1 ] < 0) pattern = paste0("qxx-", pattern)
+  qxx.files <- dir(path = path, pattern = pattern)
+  qxx.files <- qxx.files[   which( unlist(lapply( qxx.files, function( x ) gregexpr("\\~\\$", x)[[ 1 ]])) < 0) ]
+
+  qxx.version <- substr(qxx.files
+                        , unlist( lapply(qxx.files, function( x ) gregexpr("\\-v[0-9][0-9]\\-", x)[[ 1 ]] + 2 ))
+                        , unlist( lapply(qxx.files, function( x ) gregexpr("\\-v[0-9][0-9]\\-", x)[[ 1 ]] + 3 )))
+
+  if(is.na(suppressWarnings(as.numeric(qxx.version)))){
+    qxx.files <- qxx.files[ which.max(file.info( file.path(path, qxx.files))$mtime) ]
+  } else {
+    qxx.files <- qxx.files[ which.max(qxx.version) ]
+  }
+
+  if(path.return) qxx.files <- file.path(path, qxx.files)
+  return(qxx.files)
+
+}
+
 pchp <-function(){
   oldPar<-par()
   par(font=2, mar=c(0.5,0,0,0))

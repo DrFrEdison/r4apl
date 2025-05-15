@@ -8,7 +8,8 @@ read_instrument_db(
   instrument = "GC-MS",
   date = NA,
   time = NA,
-  subdate = "2024-07-01"
+  subdate = "2024-07-01",
+  pattern = "qxx-db"
 )
 }
 \arguments{

@@ -1,3 +1,29 @@
+ueberstunden.x.weeks <- function(x = 20, dat = interflex ){
+  lastxweeks <- tail(dat[ nchar(dat$Zeitkto) > 1 &
+                            dat$Ist != 0 &
+                            dat$Fehlgrund != "Dienstgang" &
+                            dat$Fehlgrund != "Krank" &
+                            dat$Fehlgrund != "Urlaub" &
+                            dat$Fehlgrund != "Erkrankung Kind" &
+                            dat$Fehlgrund != "Arbeitspause"], x)
+
+  Ueberstunden <- as.numeric(gsub(",", ".", lastxweeks$Ist)) - 8
+  returndat <- data.frame(Datum = lastxweeks$Datum
+                          , Wochentag = weekdays.Date(lastxweeks$Datum)
+                          , Diff = Ueberstunden)
+
+  returndat <- list(returndat
+                    , sum(returndat$Diff)
+                    , tapply(returndat$Diff
+                             , factor(returndat$Wochentag, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+                             , mean)
+                    , mean(returndat$Diff))
+
+  names( returndat ) <- c("Uebersicht", "Summe", "Ueberstunden pro Wochentag", "Mittelwert pro Tag")
+  returndat$`Ueberstunden pro Wochentag` <- round(returndat$`Ueberstunden pro Wochentag`, 1)
+  return(returndat)
+}
+
 #' Calculate Working Hours and Remaining Time
 #'
 #' This function calculates the total working hours, remaining time until a full workday (8 or 9 hours), and updates the "Zeitkonto" (time account) if provided.

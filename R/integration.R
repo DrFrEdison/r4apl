@@ -48,7 +48,7 @@ integrate_peaks <- function(x, y) {
 #' @export
 #' @import baseline
 #' @importFrom utils head
-segment_integration <- function(RT, Intensity,
+segment_integration <- function(RT, Intensity, detector,
                                 segment,
                                 findpeak,
                                 reprocess = NULL,
@@ -66,7 +66,7 @@ segment_integration <- function(RT, Intensity,
 
   windowsFonts(Verdana = windowsFont("Verdana"))
   graphics.off()
-  if(png) png(filename  = file.path(wd$data$integration, paste0(datetime(), "_", ID, "_", name, ".png")), width = width <- 480 * 4, height = width*.6
+  if(png) png(filename  = file.path(wd$local$Documents, "ttt", paste0(datetime(), "_", ID, "_", detector, "_", name, ".png")), width = width <- 480 * 4, height = width*.6
               , family = r4apl$font)
 
   if(png) par(mar = c(6, 13, 6, 0.25), mfrow = c(parmfrow(length(segment) ))
@@ -85,7 +85,7 @@ segment_integration <- function(RT, Intensity,
   x.segments <- seq(0, round(range(RT)[2], 1), 1)
   segments(x0 = x.segments, y0 = par("usr")[3], x1 = x.segments,
            y1 = par("usr")[3] - diff(par("usr")[3:4]) * .04, xpd = TRUE, lwd = 2)
-  text(x.segments, par("usr")[3] - diff(par("usr")[3:4]) * .08, xpd = T, cex = 2)
+  text(x.segments, par("usr")[3] - diff(par("usr")[3:4]) * .08, x.segments, xpd = T, cex = 2)
   if(png) mtext("Retention Time", 1, 5, cex = 1.5)
   if(png) mtext("Intensity", 2, 10, cex = 1.5)
   box()
@@ -166,6 +166,30 @@ segment_integration <- function(RT, Intensity,
       peaks[[i.seg]] <- subset(peaks[[i.seg]], !is.na(area) & area > this.para$minarea & height > this.para$minpeakheight)
     }
 
+    # clean ####
+    if(is.data.frame(peaks[[i.seg]])) peaks[[i.seg]] <- peaks[[i.seg]][ peaks[[i.seg]]$area >= as.numeric( findpeak$minarea[ seg ] ) , ]
+    if(is.data.frame(peaks[[i.seg]])) peaks[[i.seg]] <- peaks[[i.seg]][ peaks[[i.seg]]$height >= as.numeric( findpeak$minpeakheight[ seg ] ) , ]
+
+    # Peak löschen ####
+    if (!is.null(removepeak) && nrow(removepeak) > 0) {
+      for (p in seq_len(nrow(removepeak))) {
+        if (!(removepeak$RT[p] > min(x1.range) & removepeak$RT[p] < max(x1.range))) next
+
+        peak.idx <- which.min( abs( peaks[[i.seg]]$RT - removepeak$RT[p] ))
+        if (length(peak.idx) == 0) next
+
+        j <- peak.idx[1]
+        o <- as.numeric(rownames(peaks[[i.seg]])[j])
+
+        # x.peak[[o]] <- NULL
+        # y.peak[[o]] <- NULL
+        # y.baseline[[o]]  <- NULL
+
+        peaks[[i.seg]] <- peaks[[i.seg]][ - j , ]
+
+      }
+    }
+
     # Neue Peaks hinzufügen ####
     if (!is.null(addpeak) && nrow(addpeak) > 0 && any(addpeak$RT > min(x1.range) & addpeak$RT < max(x1.range))) {
       for (p in seq_len(nrow(addpeak))) {
@@ -183,7 +207,7 @@ segment_integration <- function(RT, Intensity,
         new.peak$RT <- x1.range[ new.peak$max ]
 
         if(addpeak$type[ p ] != "negative") new.peak$height <- max( y1.corrected[ new.peak$start : new.peak$end ] )
-        if(addpeak$type[ p ] == "negative")  new.peak$height <- max( y1.corrected[ new.peak$start : new.peak$end ] * -1 )
+        if(addpeak$type[ p ] == "negative")  new.peak$height <- min( y1.corrected[ new.peak$start : new.peak$end ] )
 
         if(addpeak$type[ p ] != "negative") new.peak$area <- integrate_peaks(x1.range[ new.peak$start : new.peak$end ]
                                                                         , y1.corrected[ new.peak$start : new.peak$end ])
@@ -221,32 +245,27 @@ segment_integration <- function(RT, Intensity,
         idx.start <- peaks[[i.seg]]$start[j] + reprocess$left[p]
         idx.end <- peaks[[i.seg]]$end[j] + reprocess$right[p]
 
+        peaks[[i.seg]][ peak.idx , "start"] <- idx.start
+        peaks[[i.seg]][ peak.idx , "end"] <- idx.end
+        peaks[[i.seg]][ peak.idx , "end"]
+
         if(idx.start <= 0) idx.start <- 1
 
         x.peak[[o]] <- x1.range[idx.start:idx.end]
         y.peak[[o]] <- y1.corrected[idx.start:idx.end]
         y.baseline[[o]] <- baseline.corrected[idx.start:idx.end]
-        peaks[[i.seg]]$area[j] <- integrate_peaks(x.peak[[o]], y.peak[[o]])
-      }
-    }
 
-    # Peak löschen ####
-    if (!is.null(removepeak) && nrow(removepeak) > 0) {
-      for (p in seq_len(nrow(removepeak))) {
-        if (!(removepeak$RT[p] > min(x1.range) & removepeak$RT[p] < max(x1.range))) next
+        if(reprocess$type[ p ] == "negative"){
+          peaks[[i.seg]][ peak.idx , "RT"] <- x.peak[[ o ]][ which.min(y.peak[[o]]) ]
+          peaks[[i.seg]][ peak.idx , "height"] <- min(y.peak[[o]])
+          }else{
+          peaks[[i.seg]][ peak.idx , "RT"] <- x.peak[[ o ]][ which.max(y.peak[[o]]) ]
+          peaks[[i.seg]][ peak.idx , "height"] <- max(y.peak[[o]])
+        }
 
-        peak.idx <- which.min( abs( peaks[[i.seg]]$RT - removepeak$RT[p] ))
-        if (length(peak.idx) == 0) next
-
-        j <- peak.idx[1]
-        o <- as.numeric(rownames(peaks[[i.seg]])[j])
-
-        # x.peak[[o]] <- NULL
-        # y.peak[[o]] <- NULL
-        # y.baseline[[o]]  <- NULL
-
-        peaks[[i.seg]] <- peaks[[i.seg]][ - j , ]
-
+        if(reprocess$type[ p ] == "negative") peaks[[i.seg]]$area[j] <- integrate_peaks(x.peak[[ o ]], y.peak[[o]] - min(y.peak[[o]])) else{
+          peaks[[i.seg]]$area[j] <- integrate_peaks(x.peak[[o]], y.peak[[o]])#
+        }
       }
     }
 
@@ -286,6 +305,8 @@ segment_integration <- function(RT, Intensity,
   if(png) dev.off()
   # Ergebnis zusammenfassen
   peaks <- do.call(rbind, peaks)
+
+  if(length(peaks) == 0) return(NULL)
   if(nrow(peaks) > 0)peaks <- peaks[order(peaks$RT), ]
   rownames(peaks) <- seq_len(nrow(peaks))
   return(peaks)

@@ -85,5 +85,8 @@ read_instrument_db <- function(instrument = "GC-MS",
   dat <- dat[ , -"basename"]
   dat <- dat[ nrow(dat) : 1 , ]
   dat <- dat[ dat$method != "Standby" , ]
+  dat$method <- basename( as.character(dat$method))
+  dat$Dilution <- NULL
+  dat$AcqTime <- NULL
   return(dat)
 }

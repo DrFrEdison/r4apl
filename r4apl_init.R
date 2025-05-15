@@ -44,3 +44,8 @@ devtools::test()
 
 usethis::use_github()
 
+# make offline tar
+devtools::build(path = this.path::this.dir())  # optional: set path
+# install.packages("Z:/Mitarbeiter/Kurtz Markus/R/utilities/r4apl/r4apl_0.2.0.tar.gz", repos = NULL, type = "source")
+
+
