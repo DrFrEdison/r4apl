@@ -1,3 +1,11 @@
+astm <- function(){
+
+  dat1 <- data.frame(ASTM = c("D5827", "D6594")
+                     , Analytik = c("IC", "HTCBT"))
+
+  return(dat1)
+}
+
 last_qxx <- function(path, pattern, path.return = T){
 
   if(unlist(gregexpr("qxx", pattern))[ 1 ] < 0) pattern = paste0("qxx-", pattern)

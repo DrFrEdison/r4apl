@@ -56,7 +56,9 @@ segment_integration <- function(RT, Intensity, detector,
                                 removepeak = NULL,
                                 name,
                                 ID,
-                                png = T
+                                png = T,
+                                save.folder = wd$desktop
+
 
 ) {
 
@@ -66,7 +68,7 @@ segment_integration <- function(RT, Intensity, detector,
 
   windowsFonts(Verdana = windowsFont("Verdana"))
   graphics.off()
-  if(png) png(filename  = file.path(wd$local$Documents, "ttt", paste0(datetime(), "_", ID, "_", detector, "_", name, ".png")), width = width <- 480 * 4, height = width*.6
+  if(png) png(filename  = file.path(save.folder, paste0(datetime(), "_", ID, "_", detector, "_", name, ".png")), width = width <- 480 * 4, height = width*.6
               , family = r4apl$font)
 
   if(png) par(mar = c(6, 13, 6, 0.25), mfrow = c(parmfrow(length(segment) ))
@@ -208,6 +210,14 @@ segment_integration <- function(RT, Intensity, detector,
 
         if(addpeak$type[ p ] != "negative") new.peak$height <- max( y1.corrected[ new.peak$start : new.peak$end ] )
         if(addpeak$type[ p ] == "negative")  new.peak$height <- min( y1.corrected[ new.peak$start : new.peak$end ] )
+
+        if(any( is.na( x1.range[ new.peak$start : new.peak$end ]))){
+
+          new.peak$start <- new.peak$start + min(which(!is.na(x1.range[ new.peak$start : new.peak$end ]))) - 1
+          new.peak$end <- new.peak$start + max(which(!is.na(x1.range[ new.peak$start : new.peak$end ]))) - 1
+
+
+        }
 
         if(addpeak$type[ p ] != "negative") new.peak$area <- integrate_peaks(x1.range[ new.peak$start : new.peak$end ]
                                                                         , y1.corrected[ new.peak$start : new.peak$end ])

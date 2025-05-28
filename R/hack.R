@@ -1,4 +1,6 @@
 ueberstunden.x.weeks <- function(x = 20, dat = interflex ){
+
+  if(is.na(x)) x <- nrow(dat)
   lastxweeks <- tail(dat[ nchar(dat$Zeitkto) > 1 &
                             dat$Ist != 0 &
                             dat$Fehlgrund != "Dienstgang" &
